@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import requests
 import time
@@ -7,6 +8,7 @@ import yaml
 from pathlib import Path
 from urllib.parse import urljoin
 
+LOG = logging.getLogger(__name__)
 
 water_config = None
 air_config = None
@@ -51,9 +53,12 @@ def load_water_stations():
     if needs_update:
         resp = requests.get(urljoin(water_config["url"], "/Sensor/current"))
         stations = resp.json()["streams"]
-        with open(path, "w") as f:
-            yaml.safe_dump(stations, f)
-    
+        try:
+            with open(path, "w") as f:
+                yaml.safe_dump(stations, f)
+        except FileNotFoundError:
+            LOG.warning(f"Unable to save cache file: {path}")
+
     return stations
 
 
@@ -135,8 +140,11 @@ def load_air_quality():
         }
         resp = requests.post(url, params=params, headers=headers, json=data)
         results = resp.json()["results"]
-        with open(path, "w") as f:
-            yaml.safe_dump(results, f)
+        try:
+            with open(path, "w") as f:
+                yaml.safe_dump(results, f)
+        except FileNotFoundError:
+            LOG.warning(f"Unable to save cache file: {path}")
     
     return results
 
