@@ -41,8 +41,10 @@ def load_water_stations():
     path = Path(os.path.expanduser(water_data_file))
 
     try:
-        if (time.time() - path.stat().st_mtime > 
-            water_config["cache_timeout_in_minutes"] * 60):
+        if (
+            time.time() - path.stat().st_mtime
+            > water_config["cache_timeout_in_minutes"] * 60
+        ):
             needs_update = True
         else:
             with open(path) as f:
@@ -80,7 +82,9 @@ def get_water_stations(watershed=None, station_ids=None):
     return stations
 
 
-def get_water_stations_above_threshold(watershed=None, station_ids=None, above_threshold=1):
+def get_water_stations_above_threshold(
+    watershed=None, station_ids=None, above_threshold=1
+):
     water_severity = {
         0: "Normal",
         1: "Take Action",
@@ -99,14 +103,15 @@ def get_water_stations_above_threshold(watershed=None, station_ids=None, above_t
             direct_key = f"th{threshold}_direct"
             threshold_description_key = f"threshold{threshold}Desc"
 
-            if ((station[rated_key] != 0 and station["flow"] > station[rated_key]) or 
-                (station[direct_key] != 0 and station["stage"] > station[direct_key])):
+            if (station[rated_key] != 0 and station["flow"] > station[rated_key]) or (
+                station[direct_key] != 0 and station["stage"] > station[direct_key]
+            ):
                 extras = {
                     "severity_label": water_severity[threshold],
                     "expected_conditions": station[threshold_description_key],
                 }
                 is_above_threshold = True
-        
+
         if is_above_threshold:
             station.update(extras)
             stations_above_threshold.append(station)
@@ -119,8 +124,10 @@ def load_air_quality():
     path = Path(os.path.expanduser(air_data_file))
 
     try:
-        if (time.time() - path.stat().st_mtime > 
-            air_config["cache_timeout_in_minutes"] * 60):
+        if (
+            time.time() - path.stat().st_mtime
+            > air_config["cache_timeout_in_minutes"] * 60
+        ):
             needs_update = True
         else:
             with open(path) as f:
@@ -130,13 +137,13 @@ def load_air_quality():
 
     if needs_update:
         url = urljoin(air_config["url"], "rtaqd-api/aqiHighData")
-        params = {'authkey': air_config['authkey'], 'lang': 'en'}
-        headers = {'content-type': 'application/json'}
+        params = {"authkey": air_config["authkey"], "lang": "en"}
+        headers = {"content-type": "application/json"}
         data = {
-            "dataType":"aqi",
-            "dataView":"daily",
-            "startDate":str(datetime.date.today()),
-            "parameterId":49
+            "dataType": "aqi",
+            "dataView": "daily",
+            "startDate": str(datetime.date.today()),
+            "parameterId": 49,
         }
         resp = requests.post(url, params=params, headers=headers, json=data)
         results = resp.json()["results"]
@@ -145,19 +152,19 @@ def load_air_quality():
                 yaml.safe_dump(results, f)
         except FileNotFoundError:
             LOG.warning(f"Unable to save cache file: {path}")
-    
+
     return results
 
 
 def get_air_quality(station_id=None):
     if station_id is None:
-        station_id = air_config['station_id']
+        station_id = air_config["station_id"]
 
     zones = load_air_quality()
 
     for zone in zones:
-        for station in zone['Stations']:
-            if station['stationId'] == station_id:
+        for station in zone["Stations"]:
+            if station["stationId"] == station_id:
                 return station
 
 
@@ -172,36 +179,38 @@ air_severity = {
 
 
 load_config()
-water_stations = get_water_stations_above_threshold(watershed="Guadalupe")
 
-if water_stations:
-    print("ALERT!! The following water level readings are above threshold levels:")
+if __name__ == "__main__":
+    water_stations = get_water_stations_above_threshold(watershed="Guadalupe")
 
-    for station in water_stations:
-        print(f"  Name: {station['name']}")
-        print(f"  Watershed: {station['watershed']}")
-        print(f"  Status: {station['severity_label']}")
-        print(f"  Expected conditions: {station['expected_conditions']}")
-        print()
-else:
-    print("Water levels normal.")
+    if water_stations:
+        print("ALERT!! The following water level readings are above threshold levels:")
 
-air_station = get_air_quality()
-air_severity_label = 'Good'
-air_quality_is_degraded = False
+        for station in water_stations:
+            print(f"  Name: {station['name']}")
+            print(f"  Watershed: {station['watershed']}")
+            print(f"  Status: {station['severity_label']}")
+            print(f"  Expected conditions: {station['expected_conditions']}")
+            print()
+    else:
+        print("Water levels normal.")
 
-for severity in sorted(air_severity.keys()):
-    if air_station['aqiHighAggregate']['value'] >= severity:
-        air_severity_label = air_severity[severity]
-        if severity > 0:
-            air_quality_is_degraded = True
-        continue
+    air_station = get_air_quality()
+    air_severity_label = "Good"
+    air_quality_is_degraded = False
 
-if air_quality_is_degraded:
-    print("ALERT!! Air quality is degraded:")
-    print(f"  Name: {air_station['stationName']}")
-    print(f"  Type: {air_station['aqiHighAggregate']['parameterName']}")
-    print(f"  Value: {air_station['aqiHighAggregate']['value']}")    
-    print(f"  Status: {air_severity_label}")
-else:
-    print("Air levels normal.")
+    for severity in sorted(air_severity.keys()):
+        if air_station["aqiHighAggregate"]["value"] >= severity:
+            air_severity_label = air_severity[severity]
+            if severity > 0:
+                air_quality_is_degraded = True
+            continue
+
+    if air_quality_is_degraded:
+        print("ALERT!! Air quality is degraded:")
+        print(f"  Name: {air_station['stationName']}")
+        print(f"  Type: {air_station['aqiHighAggregate']['parameterName']}")
+        print(f"  Value: {air_station['aqiHighAggregate']['value']}")
+        print(f"  Status: {air_severity_label}")
+    else:
+        print("Air levels normal.")
