@@ -1,3 +1,5 @@
+cache_directory: "~/.cache/japantown_prepared_monitor"
+
 water:
   url: https://alertdata.valleywater.org/
   watershed: Guadalupe

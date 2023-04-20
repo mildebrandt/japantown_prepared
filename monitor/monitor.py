@@ -14,7 +14,7 @@ water_config = None
 air_config = None
 config_file = "config.yaml"
 
-cache_directory = "~/.cache/cert_monitor"
+cache_directory = "~/.cache/japantown_prepared_monitor"
 water_data_file = f"{cache_directory}/water_data.yaml"
 air_data_file = f"{cache_directory}/air_data.yaml"
 
@@ -177,8 +177,11 @@ air_severity = {
     301: "Hazardous",
 }
 
+def init():
+    create_cache_dir()
+    load_config()
 
-load_config()
+init()
 
 if __name__ == "__main__":
     water_stations = get_water_stations_above_threshold(watershed="Guadalupe")
