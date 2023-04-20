@@ -1,10 +1,10 @@
-import datetime
 import logging
 import os
 import requests
 import time
 import yaml
 
+from datetime import datetime, date, timezone
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -14,6 +14,7 @@ water_config = None
 air_config = None
 config_file = "config.yaml"
 
+# TODO: make cache directory configurable
 cache_directory = "~/.cache/japantown_prepared_monitor"
 water_data_file = f"{cache_directory}/water_data.yaml"
 air_data_file = f"{cache_directory}/air_data.yaml"
@@ -67,11 +68,23 @@ def load_water_stations():
 def get_water_stations(watershed=None, station_ids=None):
     all_stations = load_water_stations()
 
-    if watershed is None and station_ids is None:
-        return all_stations
+    if watershed is None:
+        watershed = water_config.get("watershed")
+
+    if station_ids is None:
+        station_ids = water_config.get("station_ids")
 
     stations = []
     for station in all_stations:
+        # If the station was last updated over 24 hours ago, skip it.
+        if (
+            datetime.now(timezone.utc) - datetime.fromisoformat(station["timestamp"])
+        ).total_seconds() > 60 * 60 * 24:
+            continue
+
+        if watershed is None and station_ids is None:
+            stations.append(station)
+
         if station_ids is not None:
             if station["gageId"] in station_ids:
                 stations.append(station)
@@ -142,7 +155,7 @@ def load_air_quality():
         data = {
             "dataType": "aqi",
             "dataView": "daily",
-            "startDate": str(datetime.date.today()),
+            "startDate": str(date.today()),
             "parameterId": 49,
         }
         resp = requests.post(url, params=params, headers=headers, json=data)
@@ -177,14 +190,16 @@ air_severity = {
     301: "Hazardous",
 }
 
+
 def init():
     create_cache_dir()
     load_config()
 
+
 init()
 
 if __name__ == "__main__":
-    water_stations = get_water_stations_above_threshold(watershed="Guadalupe")
+    water_stations = get_water_stations_above_threshold()
 
     if water_stations:
         print("ALERT!! The following water level readings are above threshold levels:")
