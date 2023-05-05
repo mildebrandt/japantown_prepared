@@ -21,4 +21,3 @@ def get_statuses() -> dict:
 if __name__ == "__main__":
     for source, status in get_statuses().items():
         print(status)
-        print()
