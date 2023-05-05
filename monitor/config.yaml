@@ -1,13 +1,9 @@
 cache_directory: "~/.cache/japantown_prepared_monitor"
 
-water:
-  url: https://alertdata.valleywater.org/
+valleywater:
   watershed: Guadalupe
-  cache_timeout_in_minutes: 15
 
-air:
-  url: https://baaqmdrtaqd.azurewebsites.net/
+baaqmd:
   authkey: JHRFBG84T548HBNFD38F0GIG05GJ48
-  cache_timeout_in_minutes: 15
   zone: "Santa Clara Valley"
   station_id: 7032
