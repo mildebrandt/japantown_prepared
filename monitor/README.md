@@ -1,4 +1,6 @@
 # Japantown Prepared Monitor
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/mildebrandt/japantown_prepared/main/LICENSE)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ## TL;DR
 ```
