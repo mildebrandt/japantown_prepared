@@ -22,7 +22,7 @@ class baaqmd(DataSource):
 
         if results is None:
             url = urljoin(self.base_url, "rtaqd-api/aqiHighData")
-            params = {"authkey": self.config["authkey"], "lang": "en"}
+            params = {"authkey": self.authkey, "lang": "en"}
             headers = {"content-type": "application/json"}
             data = {
                 "dataType": "aqi",
@@ -38,7 +38,7 @@ class baaqmd(DataSource):
 
     def get_air_quality(self, station_id=None) -> dict:
         if station_id is None:
-            station_id = self.config["station_id"]
+            station_id = self.station_id
 
         zones = self.load_air_quality()
 

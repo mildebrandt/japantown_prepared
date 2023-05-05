@@ -55,3 +55,13 @@ If neither `watershed` nor `station_ids` are provided, then all stations are mon
 |cache_timeout_in_minutes|The number of minutes to cache the previous call to the API.|
 
 Currently, the tool is limited to monitoring only one air quality station.
+
+## Adding new data sources
+Each data source has its own file in the `data_sources` directory. In that file is a class which extends from the `DataSource` class. The name of the class is used to load the configuration from the `config.yaml` file. For example, in the `water_levels_valleywater.py` file, there's a class called `valleywater`. In the `config.yaml`, there's a corresponding attribute named `valleywater`. All the attributes under that will be available as instance variables. It's up to each class to implement the `get_status()` method and return the following structure:
+```
+{
+    "message": ""  # A formatted string to show to the user.
+    "alerts": []   # An array of dictionaries with attributes of interest
+                   #   from several montioring stations if applicable.
+}
+```

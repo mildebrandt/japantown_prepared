@@ -18,12 +18,10 @@ cache_directory = "~/.cache/japantown_prepared_monitor"
 
 
 class DataSource:
-    config = {
-        "cache_expiry_in_minutes": 10,
-    }
+    cache_expiry_in_minutes = 10
 
     def __init__(self, **kwargs) -> None:
-        self.config.update(kwargs)
+        self.__dict__.update(kwargs)
         self.cache_filename = f"{cache_directory}/{self.__class__.__name__}.yaml"
 
     def create_cache_dir(self, cache_directory: str = cache_directory):
@@ -36,10 +34,7 @@ class DataSource:
         results = None
         path = Path(os.path.expanduser(self.cache_filename))
         try:
-            if (
-                time.time() - path.stat().st_mtime
-                < self.config["cache_expiry_in_minutes"] * 60
-            ):
+            if time.time() - path.stat().st_mtime < self.cache_expiry_in_minutes * 60:
                 with open(path) as f:
                     results = yaml.safe_load(f)
         except (FileExistsError, FileNotFoundError):

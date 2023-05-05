@@ -23,10 +23,10 @@ class valleywater(DataSource):
         all_stations = self.load_water_stations()
 
         if watershed is None:
-            watershed = self.config.get("watershed")
+            watershed = getattr(self, "watershed", None)
 
         if station_ids is None:
-            station_ids = self.config.get("station_ids")
+            station_ids = getattr(self, "station_ids", None)
 
         stations = []
         for station in all_stations:
