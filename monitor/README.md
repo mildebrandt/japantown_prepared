@@ -5,7 +5,7 @@
 git clone git@github.com:mildebrandt/japantown_prepared.git
 cd japantown_prepared/monitor
 pip install -r requirements.txt
-python monitor
+python monitor.py
 ```
 
 ## Overview
@@ -22,35 +22,31 @@ Running the script will return either a "levels normal" message or a detailed de
 ```
 cache_directory: "~/.cache/japantown_prepared_monitor"
 
-water:
-  url: https://alertdata.valleywater.org/
+valleywater:
   watershed: Guadalupe
   station_ids:
     - 5060
   cache_timeout_in_minutes: 15
 
-air:
-  url: https://baaqmdrtaqd.azurewebsites.net/
+baaqmd:
   authkey: JHRFBG84T548HBNFD38F0GIG05GJ48
   cache_timeout_in_minutes: 15
   zone: "Santa Clara Valley"
   station_id: 7032
 ```
 
-#### Water config:
+#### valleywater config:
 |Item|Description|
 |-|-|
-|url|The main API url to query.|
 |watershed|The name of the watershed to monitor. **Optional**|
 |station_ids|The IDs of the stations to monitor. **Optional**|
 |cache_timeout_in_minutes|The number of minutes to cache the previous call to the API.|
 
 If neither `watershed` nor `station_ids` are provided, then all stations are monitored. If both `watershed` and `station_ids` are provided, then all the stations within the watershed and the additional stations in `station_ids` are monitored.
 
-#### Air config:
+#### baaqmd config:
 |Item|Description|
 |-|-|
-|url|The main API url to query.|
 |authkey|The authkey for the API.|
 |station_id|The ID of the station to monitor.|
 |zone|The zone where the station resides.|
