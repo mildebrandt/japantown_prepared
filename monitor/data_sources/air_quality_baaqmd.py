@@ -1,3 +1,4 @@
+import os
 import requests
 
 from . import DataSource
@@ -79,7 +80,7 @@ class baaqmd(DataSource):
 # Used only for testing
 if __name__ == "__main__":
     air_monitor = baaqmd(
-        authkey="JHRFBG84T548HBNFD38F0GIG05GJ48",
+        authkey=os.environ["BAAQMD_AUTHKEY"],
         zone="Santa Clara Valley",
         station_id=7032,
     )

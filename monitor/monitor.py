@@ -1,16 +1,9 @@
-import yaml
+from config import config
+from notify import nofity
 from data_sources import data_source_classes
-
-config_file = "config.yaml"
-
-
-def get_config(config_file=config_file) -> dict:
-    with open(config_file, "r") as f:
-        return yaml.safe_load(f)
 
 
 def get_statuses() -> dict:
-    config = get_config()
     statuses = {}
     for name, _class in data_source_classes.items():
         inst = _class(**config.get(name, {}))
@@ -19,5 +12,10 @@ def get_statuses() -> dict:
 
 
 if __name__ == "__main__":
-    for source, status in get_statuses().items():
+    statuses = get_statuses()
+
+    for source, status in statuses.items():
         print(status)
+
+    if "notify" in config:
+        nofity(status)

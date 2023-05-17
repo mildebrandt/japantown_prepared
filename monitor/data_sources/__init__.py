@@ -79,5 +79,5 @@ for _, module_name, _ in iter_modules([package_dir]):
             and issubclass(attribute, DataSource)
             and attribute is not DataSource
         ):
-            # Add the class to the list of data sources
+            # Add the subclasses of DataSource to the list of data sources
             data_source_classes[attribute_name] = attribute
