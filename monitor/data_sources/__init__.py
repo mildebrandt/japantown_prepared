@@ -63,6 +63,16 @@ class DataSource:
         raise NotImplementedError
 
 
+def curl_format(req):
+    command = "curl -X {method} -H {headers} -d '{data}' '{uri}'"
+    method = req.method
+    uri = req.url
+    data = req.body
+    headers = ['"{0}: {1}"'.format(k, v) for k, v in req.headers.items()]
+    headers = " -H ".join(headers)
+    return command.format(method=method, headers=headers, data=data, uri=uri)
+
+
 # Adapted from https://julienharbulot.com/python-dynamical-import.html
 data_source_classes = {}
 

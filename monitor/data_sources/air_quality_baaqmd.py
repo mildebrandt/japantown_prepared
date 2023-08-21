@@ -1,9 +1,13 @@
 import os
 import requests
+import logging
 
 from . import DataSource
 from datetime import date
 from urllib.parse import urljoin
+
+
+LOG = logging.getLogger(__name__)
 
 
 class baaqmd(DataSource):

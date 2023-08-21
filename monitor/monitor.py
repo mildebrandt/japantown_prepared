@@ -7,15 +7,20 @@ def get_statuses() -> dict:
     statuses = {}
     for name, _class in data_source_classes.items():
         inst = _class(**config.get(name, {}))
-        statuses[name] = inst.get_status()["message"]
+        try:
+            statuses[name] = inst.get_status()
+        except:
+            print(f"Error getting data from the {_class.__name__} data source.\n")
     return statuses
 
 
 if __name__ == "__main__":
     statuses = get_statuses()
 
+    status_msg = ""
     for source, status in statuses.items():
-        print(status)
+        status_msg += status["message"] + "\n"
 
-    if "notify" in config:
-        nofity(status)
+    print(status_msg)
+    # if "notify" in config:
+    #     nofity("Monitor Alert", status_msg)
