@@ -13,20 +13,17 @@ from importlib import import_module
 
 LOG = logging.getLogger(__name__)
 
-# TODO: make cache directory configurable
-cache_directory = "~/.cache/japantown_prepared_monitor"
-
 
 class DataSource:
     cache_expiry_in_minutes = 10
 
     def __init__(self, **kwargs) -> None:
         self.__dict__.update(kwargs)
-        self.cache_filename = f"{cache_directory}/{self.__class__.__name__}.yaml"
+        self.cache_filename = f"{self.cache_directory}/{self.__class__.__name__}.yaml"
 
-    def create_cache_dir(self, cache_directory: str = cache_directory):
+    def create_cache_dir(self):
         try:
-            os.makedirs(os.path.expanduser(cache_directory))
+            os.makedirs(os.path.expanduser(self.cache_directory))
         except FileExistsError:
             pass
 

@@ -6,7 +6,7 @@ from data_sources import data_source_classes
 def get_statuses() -> dict:
     statuses = {}
     for name, _class in data_source_classes.items():
-        inst = _class(**config.get(name, {}))
+        inst = _class(**config.get(name, {}), **config.get("global", {}))
         try:
             statuses[name] = inst.get_status()
         except:

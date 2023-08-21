@@ -1,11 +1,4 @@
-cache_directory: "~/.cache/japantown_prepared_monitor"
-
 notify:
-  smtp_host: email-smtp.us-west-2.amazonaws.com
-  smtp_port: 465
-  ssl: true
-  sender_email: japantown-prepared@woodenrhino.com
-  sender_name: Japantown Prepared
   to:
     - email@<somedomain>.com
 
