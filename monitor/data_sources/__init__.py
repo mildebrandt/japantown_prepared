@@ -2,6 +2,7 @@ import logging
 import os
 import time
 import yaml
+import hashlib
 
 from typing import Dict, Optional
 from pathlib import Path
@@ -48,6 +49,9 @@ class DataSource:
                 yaml.safe_dump(data, f)
         except FileNotFoundError:
             LOG.warning(f"Unable to save cache file: {path}")
+
+    def create_hash(self, hash_strings):
+        return hashlib.md5("".join(sorted(hash_strings)).encode()).hexdigest()
 
     def get_status(self) -> dict:
         """Returns the current status for the requested monitor in the following format:

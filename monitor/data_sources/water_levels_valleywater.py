@@ -91,6 +91,7 @@ class valleywater(DataSource):
         water_stations = self.get_water_stations_above_threshold()
 
         alerts = []
+        hash_strings = []
         if water_stations:
             message = "ALERT!! The following water level readings are above threshold levels:\n"
 
@@ -102,12 +103,17 @@ class valleywater(DataSource):
                     f"  Expected conditions: {station['expected_conditions']}\n\n"
                 )
                 alerts.append(station)
+                hash_strings.append(
+                    f"{station['name']}{station['watershed']}{station['severity_label']}"
+                )
         else:
             message = "Water levels normal."
+            hash_strings.append("normal")
 
         return {
             "message": message,
             "alerts": alerts,
+            "hash": self.create_hash(hash_strings),
         }
 
 

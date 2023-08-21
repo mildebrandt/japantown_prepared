@@ -71,13 +71,18 @@ class baaqmd(DataSource):
             message += f"  Value: {air_station['aqiHighAggregate']['value']}\n"
             message += f"  Status: {air_severity_label}\n"
             alerts = [air_station]
+            hash_strings = [
+                f"{air_station['stationName']}{air_station['aqiHighAggregate']['parameterName']}{air_severity_label}"
+            ]
         else:
             message = "Air levels normal."
             alerts = []
+            hash_strings = ["normal"]
 
         return {
             "message": message,
             "alerts": alerts,
+            "hash": self.create_hash(hash_strings),
         }
 
 
