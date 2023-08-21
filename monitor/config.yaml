@@ -1,5 +1,5 @@
 notify:
-  enable: false
+  enable: true
   to:
     - email@<somedomain>.com
 

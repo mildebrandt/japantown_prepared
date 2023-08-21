@@ -1,6 +1,7 @@
 import os
 import requests
 import logging
+import cache
 
 from . import DataSource
 from datetime import date
@@ -23,7 +24,7 @@ class baaqmd(DataSource):
     }
 
     def load_air_quality(self) -> dict:
-        results = self.get_cached_results()
+        results = cache.get(self.__class__.__name__)
 
         if results is None:
             url = urljoin(self.base_url, "rtaqd-api/aqiHighData")
@@ -37,7 +38,7 @@ class baaqmd(DataSource):
             }
             resp = requests.post(url, params=params, headers=headers, json=data)
             results = resp.json()["results"]
-            self.save_cached_results(results)
+            cache.set(self.__class__.__name__, results)
 
         return results
 

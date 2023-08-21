@@ -1,3 +1,5 @@
+import cache
+
 from config import config
 from notify import nofity
 from data_sources import data_source_classes
@@ -15,6 +17,24 @@ def get_statuses() -> dict:
     return statuses
 
 
+# Returns True if a new status appears or if a status has changed.
+# After comparison, it stored the updated hashes in the cache.
+def process_hashes(hashes: dict) -> bool:
+    hashes_changed = False
+    previous_hashes = cache.get("hashes")
+    if previous_hashes:
+        for key, _hash in hashes.items():
+            if key not in previous_hashes:
+                hashes_changed = True
+            if previous_hashes[key] != _hash:
+                hashes_changed = True
+    else:
+        hashes_changed = True
+
+    cache.set("hashes", hashes, expire_in_seconds=None)
+    return hashes_changed
+
+
 if __name__ == "__main__":
     statuses = get_statuses()
 
@@ -24,9 +44,10 @@ if __name__ == "__main__":
         status_msg += status["message"] + "\n"
         hashes[source] = status["hash"]
 
-    # TODO: Compare hashes with stored file, send email if different, save new hashes
-    # If no file, send if alert status, don't send if no alerts
-
     print(status_msg)
-    if config.get("notify", {}).get("enable"):
-        nofity("Monitor Alert", status_msg)
+
+    hashes_changed = process_hashes(hashes)
+
+    if hashes_changed:
+        if config.get("notify", {}).get("enable"):
+            nofity("Monitor Alert", status_msg)

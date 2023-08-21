@@ -22,34 +22,6 @@ class DataSource:
         self.__dict__.update(kwargs)
         self.cache_filename = f"{self.cache_directory}/{self.__class__.__name__}.yaml"
 
-    def create_cache_dir(self):
-        try:
-            os.makedirs(os.path.expanduser(self.cache_directory))
-        except FileExistsError:
-            pass
-
-    def get_cached_results(self) -> Optional[Dict]:
-        results = None
-        path = Path(os.path.expanduser(self.cache_filename))
-        try:
-            if time.time() - path.stat().st_mtime < self.cache_expiry_in_minutes * 60:
-                with open(path) as f:
-                    results = yaml.safe_load(f)
-        except (FileExistsError, FileNotFoundError):
-            pass
-
-        return results
-
-    def save_cached_results(self, data: Dict) -> None:
-        self.create_cache_dir()
-        path = Path(os.path.expanduser(self.cache_filename))
-
-        try:
-            with open(path, "w") as f:
-                yaml.safe_dump(data, f)
-        except FileNotFoundError:
-            LOG.warning(f"Unable to save cache file: {path}")
-
     def create_hash(self, hash_strings):
         return hashlib.md5("".join(sorted(hash_strings)).encode()).hexdigest()
 

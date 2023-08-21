@@ -1,4 +1,5 @@
 import requests
+import cache
 
 from typing import List, Dict
 from . import DataSource
@@ -10,12 +11,12 @@ class valleywater(DataSource):
     base_url = "https://alertdata.valleywater.org/"
 
     def load_water_stations(self) -> dict:
-        results = self.get_cached_results()
+        results = cache.get(self.__class__.__name__)
 
         if results is None:
             resp = requests.get(urljoin(self.base_url, "/Sensor/current"))
             results = resp.json()["streams"]
-            self.save_cached_results(results)
+            cache.set(self.__class__.__name__, results)
 
         return results
 

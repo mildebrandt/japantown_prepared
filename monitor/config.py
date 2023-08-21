@@ -7,7 +7,7 @@ config_file = os.environ.get("MONITOR_CONFIG_FILE", "config.yaml")
 config = {
     "global": {
         "cache_directory": "~/.cache/japantown_prepared_monitor",
-        "cache_expiry_in_minutes": 10,
+        "cache_expiry_in_seconds": 600,
     },
     "notify": {
         "enable": False,
