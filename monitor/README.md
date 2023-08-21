@@ -37,6 +37,8 @@ baaqmd:
   station_id: 7032
 ```
 
+String items in the `config.yaml` file can be overridden from the environment. For example, to override the authkey in the baaqmd data source, set the `MONITOR__baaqmd__authkey` environment variable.
+
 #### valleywater config:
 |Item|Description|
 |-|-|
