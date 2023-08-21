@@ -22,5 +22,5 @@ if __name__ == "__main__":
         status_msg += status["message"] + "\n"
 
     print(status_msg)
-    # if "notify" in config:
-    #     nofity("Monitor Alert", status_msg)
+    if config.get("notify", {}).get("enable"):
+        nofity("Monitor Alert", status_msg)

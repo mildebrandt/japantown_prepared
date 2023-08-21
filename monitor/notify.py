@@ -25,6 +25,7 @@ def sendmail(
     text_body: Optional[str] = None,
     html_body: Optional[str] = None,
     ssl: bool = True,
+    **kwargs,
 ):
     if to is None and cc is None and bcc is None:
         raise Exception("No receivers for the email.")

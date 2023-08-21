@@ -10,6 +10,7 @@ config = {
         "cache_expiry_in_minutes": 10,
     },
     "notify": {
+        "enable": False,
         "smtp_host": "email-smtp.us-west-2.amazonaws.com",
         "smtp_port": 465,
         "ssl": True,
@@ -19,8 +20,12 @@ config = {
 }
 
 with open(config_file, "r") as f:
-    config.update(yaml.safe_load(f))
-
+    config_from_file = yaml.safe_load(f)
+    for k, v in config_from_file.items():
+        if k in config:
+            config[k].update(v)
+        else:
+            config[k] = v
 
 # Environment variables in the form of MONITOR__{section}__{attribute}
 # will replace existing, or add to, the config object.
