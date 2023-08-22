@@ -35,8 +35,10 @@ valleywater:
 
 baaqmd:
   authkey: JHRFBG84T548HBNFD38F0GIG05GJ48
-  zone: "Santa Clara Valley"
-  station_id: 7032
+  zones: 
+    - name: "Santa Clara Valley"
+      station_ids: 
+        - 7032
 ```
 
 String items in the `config.yaml` file can be overridden from the environment using the format `MONITOR__{section}__{attribute}`. For example, to override the `authkey` attribute in the `baaqmd` section, set the `MONITOR__baaqmd__authkey` environment variable.
@@ -46,7 +48,6 @@ String items in the `config.yaml` file can be overridden from the environment us
 |-|-|
 |watershed|The name of the watershed to monitor. **Optional**|
 |station_ids|The IDs of the stations to monitor. **Optional**|
-|cache_timeout_in_minutes|The number of minutes to cache the previous call to the API.|
 
 If neither `watershed` nor `station_ids` are provided, then all stations are monitored. If both `watershed` and `station_ids` are provided, then all the stations within the watershed and the additional stations in `station_ids` are monitored.
 
@@ -54,11 +55,14 @@ If neither `watershed` nor `station_ids` are provided, then all stations are mon
 |Item|Description|
 |-|-|
 |authkey|The authkey for the API.|
-|station_id|The ID of the station to monitor.|
-|zone|The zone where the station resides.|
-|cache_timeout_in_minutes|The number of minutes to cache the previous call to the API.|
+|zones|The zones to monitor.|
 
-Currently, the tool is limited to monitoring only one air quality station.
+#### baaqmd zone config:
+|Item|Description|
+|-|-|
+|station_ids|The IDs of the stations to monitor. **Optional**|
+
+The `zones` are manditory. The `station_ids` are optional. If no station IDs are provided, all stations within that zone will be monitored.
 
 ## Adding new data sources
 Each data source has its own file in the `data_sources` directory. In that file is a class which extends from the `DataSource` class. The name of the class is used to load the configuration from the `config.yaml` file. For example, in the `water_levels_valleywater.py` file, there's a class called `valleywater`. In the `config.yaml`, there's a corresponding attribute named `valleywater`. All the attributes under that will be available as instance variables. It's up to each class to implement the `get_status()` method and return the following structure:

@@ -5,6 +5,7 @@ import logging
 from . import DataSource
 from .. import cache
 from datetime import date
+from typing import Optional
 from urllib.parse import urljoin
 
 
@@ -42,43 +43,78 @@ class baaqmd(DataSource):
 
         return results
 
-    def get_air_quality(self, station_id=None) -> dict:
-        if station_id is None:
-            station_id = self.station_id
+    def get_stations(self, zones: Optional[dict] = None) -> dict:
+        if zones is None:
+            zones = self.zones
 
-        zones = self.load_air_quality()
+        zones_from_source = self.load_air_quality()
 
-        for zone in zones:
-            for station in zone["Stations"]:
-                if station["stationId"] == station_id:
-                    return station
+        stations = []
+        for zone_from_source in zones_from_source:
+            for zone in zones:
+                if zone["name"] == zone_from_source["Zone Name"]:
+                    if "station_ids" in zone:
+                        for station in zone_from_source["Stations"]:
+                            if station["stationId"] in zone["station_ids"]:
+                                station["Zone Name"] = zone_from_source["Zone Name"]
+                                stations.append(station)
+                    else:
+                        for station in zone_from_source["Stations"]:
+                            station["Zone Name"] = zone_from_source["Zone Name"]
+                            stations.append(station)
+        return stations
 
     def get_status(self) -> dict:
-        air_station = self.get_air_quality()
-        air_severity_label = "Good"
-        air_quality_is_degraded = False
+        stations = self.get_stations()
 
-        for severity in sorted(self.air_severity.keys()):
-            if air_station["aqiHighAggregate"]["value"] >= severity:
-                air_severity_label = self.air_severity[severity]
-                if severity > 0:
-                    air_quality_is_degraded = True
+        bad_air_stations = []
+        for station in stations:
+            # Some stations don't report apiHighAggregate
+            if "aqiHighAggregate" not in station:
                 continue
 
-        if air_quality_is_degraded:
-            message = "ALERT!! Air quality is degraded:\n"
-            message += f"  Name: {air_station['stationName']}\n"
-            message += f"  Type: {air_station['aqiHighAggregate']['parameterName']}\n"
-            message += f"  Value: {air_station['aqiHighAggregate']['value']}\n"
-            message += f"  Status: {air_severity_label}\n"
-            alerts = [air_station]
-            hash_strings = [
-                f"{air_station['stationName']}{air_station['aqiHighAggregate']['parameterName']}{air_severity_label}"
-            ]
+            air_severity_label = "Good"
+            air_quality_is_degraded = False
+
+            for severity in sorted(self.air_severity.keys()):
+                if station["aqiHighAggregate"]["value"] >= severity:
+                    air_severity_label = self.air_severity[severity]
+                    if severity > 0:
+                        air_quality_is_degraded = True
+                    continue
+
+            if air_quality_is_degraded:
+                bad_air_stations.append(
+                    {
+                        "name": station["stationName"],
+                        "zone": station["Zone Name"],
+                        "type": station["aqiHighAggregate"]["parameterName"],
+                        "value": station["aqiHighAggregate"]["value"],
+                        "status": air_severity_label,
+                        "raw_data": station,
+                    }
+                )
+
+        alerts = []
+        hash_strings = []
+
+        if bad_air_stations:
+            message = "ALERT!! The following air quality readings are above threshold levels:\n"
+
+            for station in bad_air_stations:
+                message += f"  Name: {station['name']}\n"
+                message += f"  Zone: {station['zone']}\n"
+                message += f"  Type: {station['type']}\n"
+                message += f"  Value: {station['value']}\n"
+                message += f"  Status: {station['status']}\n"
+                message += f"---\n"
+                alerts.append(station)
+                hash_strings.append(
+                    f"{station['zone']}{station['name']}{station['status']}"
+                )
         else:
             message = "Air levels normal."
-            alerts = []
-            hash_strings = ["normal"]
+            hash_strings.append("normal")
 
         return {
             "message": message,

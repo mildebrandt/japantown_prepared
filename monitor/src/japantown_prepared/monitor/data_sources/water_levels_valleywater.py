@@ -100,6 +100,7 @@ class valleywater(DataSource):
                 message += f"  Name: {station['name']}\n"
                 message += f"  Watershed: {station['watershed']}\n"
                 message += f"  Status: {station['severity_label']}\n"
+                message += f"---\n"
                 message += (
                     f"  Expected conditions: {station['expected_conditions']}\n\n"
                 )

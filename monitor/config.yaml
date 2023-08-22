@@ -1,5 +1,5 @@
 notify:
-  enable: false
+  enable: true
   to:
     - email@<somedomain>.com
 
@@ -8,5 +8,7 @@ valleywater:
 
 baaqmd:
   authkey: your_auth_key
-  zone: "Santa Clara Valley"
-  station_id: 7032
+  zones:
+    - name: "Santa Clara Valley"
+      station_ids:
+        - 7032

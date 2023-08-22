@@ -10,8 +10,10 @@ def get_statuses() -> dict:
         inst = _class(**config.get(name, {}), **config.get("global", {}))
         try:
             statuses[name] = inst.get_status()
-        except:
-            print(f"Error getting data from the {_class.__name__} data source.\n")
+        except Exception as e:
+            print(
+                f"Error getting data from the {_class.__name__} data source:\n\t{e.args[0]}\n"
+            )
     return statuses
 
 
