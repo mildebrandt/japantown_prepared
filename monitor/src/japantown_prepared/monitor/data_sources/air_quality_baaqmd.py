@@ -1,9 +1,9 @@
 import os
 import requests
 import logging
-import cache
 
 from . import DataSource
+from .. import cache
 from datetime import date
 from urllib.parse import urljoin
 

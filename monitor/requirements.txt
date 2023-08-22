@@ -1,4 +1,10 @@
+# Application
 PyYAML~=6.0
 requests~=2.28
-pre-commit~=3.3
 diskcache~=5.6
+
+# Development
+black~=23.3
+build~=0.10
+flit~=3.9
+pre-commit~=3.3

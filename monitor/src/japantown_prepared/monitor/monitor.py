@@ -1,8 +1,7 @@
-import cache
-
-from config import config
-from notify import nofity
-from data_sources import data_source_classes
+from . import cache
+from .config import config
+from .notify import nofity
+from .data_sources import data_source_classes
 
 
 def get_statuses() -> dict:
@@ -13,7 +12,6 @@ def get_statuses() -> dict:
             statuses[name] = inst.get_status()
         except:
             print(f"Error getting data from the {_class.__name__} data source.\n")
-            raise
     return statuses
 
 
@@ -26,7 +24,7 @@ def process_hashes(hashes: dict) -> bool:
         for key, _hash in hashes.items():
             if key not in previous_hashes:
                 hashes_changed = True
-            if previous_hashes[key] != _hash:
+            elif previous_hashes[key] != _hash:
                 hashes_changed = True
     else:
         hashes_changed = True
@@ -35,7 +33,7 @@ def process_hashes(hashes: dict) -> bool:
     return hashes_changed
 
 
-if __name__ == "__main__":
+def main():
     statuses = get_statuses()
 
     status_msg = ""
@@ -51,3 +49,7 @@ if __name__ == "__main__":
     if hashes_changed:
         if config.get("notify", {}).get("enable"):
             nofity("Monitor Alert", status_msg)
+
+
+if __name__ == "__main__":
+    main()

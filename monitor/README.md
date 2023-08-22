@@ -6,8 +6,10 @@
 ```
 git clone git@github.com:mildebrandt/japantown_prepared.git
 cd japantown_prepared/monitor
-pip install -r requirements.txt
-python monitor.py
+python3 -m venv venv
+. ./venv/bin/activate
+pip install .
+japantown_prepared_monitor
 ```
 
 ## Overview
@@ -22,22 +24,22 @@ https://alert.valleywater.org/map?p=map
 Running the script will return either a "levels normal" message or a detailed description of what has triggered an alert. The `config.yaml` file will tell the monitor what stations to look at for information. Here is an example:
 
 ```
-cache_directory: "~/.cache/japantown_prepared_monitor"
+global:
+  cache_directory: "~/.cache/japantown_prepared_monitor"
+  cache_expiry_in_seconds: 600
 
 valleywater:
   watershed: Guadalupe
   station_ids:
     - 5060
-  cache_timeout_in_minutes: 15
 
 baaqmd:
   authkey: JHRFBG84T548HBNFD38F0GIG05GJ48
-  cache_timeout_in_minutes: 15
   zone: "Santa Clara Valley"
   station_id: 7032
 ```
 
-String items in the `config.yaml` file can be overridden from the environment. For example, to override the authkey in the baaqmd data source, set the `MONITOR__baaqmd__authkey` environment variable.
+String items in the `config.yaml` file can be overridden from the environment using the format `MONITOR__{section}__{attribute}`. For example, to override the `authkey` attribute in the `baaqmd` section, set the `MONITOR__baaqmd__authkey` environment variable.
 
 #### valleywater config:
 |Item|Description|
@@ -66,4 +68,24 @@ Each data source has its own file in the `data_sources` directory. In that file 
     "alerts": []   # An array of dictionaries with attributes of interest
                    #   from several montioring stations if applicable.
 }
+```
+
+## Development
+You need `setuptools >= 68` and `pip >= 23` in order to install an "editable" package. Run the following commands to update your packages:
+```bash
+pip install --upgrade setuptools
+python -m pip install --upgrade pip
+```
+
+Then run the following to install the editable package:
+```bash
+pip install -e .
+```
+
+At this point, you can make changes to the code and have them apply immediately when running the `japantown_prepared_monitor` script.
+
+Packaging is done with `flit` and all metadata is found in the `pyproject.toml` file. To build and package, use the python build command from the `japantown_prepared/monitor` directory (the same directory as the `pyproject.toml` file):
+
+```bash
+python -m build
 ```

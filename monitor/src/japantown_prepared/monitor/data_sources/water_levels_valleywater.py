@@ -1,8 +1,8 @@
 import requests
-import cache
 
 from typing import List, Dict
 from . import DataSource
+from .. import cache
 from datetime import datetime, timezone
 from urllib.parse import urljoin
 

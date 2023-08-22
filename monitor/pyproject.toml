@@ -1,0 +1,21 @@
+[build-system]
+requires = ["flit_core~=3.4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "japantown_prepared_monitor"
+version = "0.0.2"
+description = "Monitor air quality, water levels, etc around Japantown San Jose, CA."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "requests~=2.28",
+    "PyYAML~=6.0",
+    "diskcache~=5.6",
+]
+
+[project.scripts]
+japantown_prepared_monitor = "japantown_prepared.monitor.monitor:main"
+
+[tool.flit.module]
+name = "japantown_prepared.monitor"
