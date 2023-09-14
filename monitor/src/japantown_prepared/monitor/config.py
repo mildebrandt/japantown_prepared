@@ -1,5 +1,9 @@
 import os
 import yaml
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 config_file = os.environ.get("MONITOR_CONFIG_FILE", "config.yaml")
 
