@@ -18,8 +18,6 @@ config = {
         "smtp_host": "email-smtp.us-west-2.amazonaws.com",
         "smtp_port": 465,
         "ssl": True,
-        "sender_email": "japantown-prepared@woodenrhino.com",
-        "sender_name": "Japantown Prepared",
     },
 }
 

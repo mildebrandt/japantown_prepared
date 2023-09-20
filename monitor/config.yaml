@@ -1,7 +1,9 @@
 notify:
   enable: true
+  sender_email: email@<senderdomain>.com
+  sender_name: "Air Monitor Service"
   to:
-    - email@<somedomain>.com
+    - email@<receiverdomain>.com
 
 valleywater:
   watershed: Guadalupe
