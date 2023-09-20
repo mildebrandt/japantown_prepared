@@ -69,15 +69,24 @@ class baaqmd(DataSource):
 
         bad_air_stations = []
         for station in stations:
-            # Some stations don't report apiHighAggregate
-            if "aqiHighAggregate" not in station:
+            # Some stations don't report aqiHigh
+            if "aqiHigh" not in station:
                 continue
 
             air_severity_label = "Good"
             air_quality_is_degraded = False
 
+            current_aqi_value = -300
+            current_aqi_type = None
+            for aqi in station["aqiHigh"]:
+                if aqi["value"] < 0:
+                    break
+
+                current_aqi_value = aqi["value"]
+                current_aqi_type = aqi["parameterName"]
+
             for severity in sorted(self.air_severity.keys()):
-                if station["aqiHighAggregate"]["value"] >= severity:
+                if current_aqi_value >= severity:
                     air_severity_label = self.air_severity[severity]
                     if severity > 0:
                         air_quality_is_degraded = True
@@ -88,8 +97,8 @@ class baaqmd(DataSource):
                     {
                         "name": station["stationName"],
                         "zone": station["Zone Name"],
-                        "type": station["aqiHighAggregate"]["parameterName"],
-                        "value": station["aqiHighAggregate"]["value"],
+                        "type": current_aqi_type,
+                        "value": current_aqi_value,
                         "status": air_severity_label,
                         "raw_data": station,
                     }
