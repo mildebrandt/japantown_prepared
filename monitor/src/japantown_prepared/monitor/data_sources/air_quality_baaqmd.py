@@ -4,12 +4,16 @@ import logging
 
 from . import DataSource
 from .. import cache
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional
 from urllib.parse import urljoin
 
 
 LOG = logging.getLogger(__name__)
+
+
+def list_to_dict(_list: list, key: str) -> dict:
+    return {i[key]: i for i in _list}
 
 
 class baaqmd(DataSource):
@@ -24,10 +28,14 @@ class baaqmd(DataSource):
         301: "Hazardous",
     }
 
-    def load_air_quality(self) -> dict:
+    def query_air_quality_data(self) -> dict:
         results = cache.get(self.__class__.__name__)
 
         if results is None:
+            # Get the readings and cache them. We get both today's and
+            # yesterday's readings since the data from the API seems to
+            # be delayed by 1 to 2 hours. Otherwise we'd miss readings
+            # around 10:00pm and 11:00pm.
             url = urljoin(self.base_url, "rtaqd-api/aqiHighData")
             params = {"authkey": self.authkey, "lang": "en"}
             headers = {"content-type": "application/json"}
@@ -37,72 +45,114 @@ class baaqmd(DataSource):
                 "startDate": str(date.today()),
                 "parameterId": 49,
             }
-            resp = requests.post(url, params=params, headers=headers, json=data)
-            results = resp.json()["results"]
+            today = requests.post(url, params=params, headers=headers, json=data).json()
+
+            data = {
+                "dataType": "aqi",
+                "dataView": "daily",
+                "startDate": str(date.today() - timedelta(days=1)),
+                "parameterId": 49,
+            }
+            yesterday = requests.post(
+                url, params=params, headers=headers, json=data
+            ).json()
+            results = [yesterday, today]
+
             cache.set(self.__class__.__name__, results)
 
         return results
 
-    def get_stations(self, zones: Optional[dict] = None) -> dict:
+    def get_latest_value_for_station(self, station) -> dict:
+        aqi = {
+            "type": None,
+            "value": -300,
+            "status": None,
+        }
+
+        # Some stations don't report aqiHigh
+        if "aqiHigh" not in station:
+            return aqi
+
+        for aqiHigh in station["aqiHigh"]:
+            if aqiHigh["value"] < 0:
+                break
+
+            aqi["type"] = aqiHigh["parameterName"]
+            aqi["value"] = aqiHigh["value"]
+
+        for severity in sorted(self.air_severity.keys()):
+            if aqi["value"] >= severity:
+                aqi["status"] = self.air_severity[severity]
+            else:
+                break
+
+        return aqi
+
+    def get_latest_value_by_station(self, zones: Optional[list] = None) -> list:
         if zones is None:
             zones = self.zones
 
-        zones_from_source = self.load_air_quality()
+        yesterday, today = self.query_air_quality_data()
 
-        stations = []
-        for zone_from_source in zones_from_source:
-            for zone in zones:
-                if zone["name"] == zone_from_source["Zone Name"]:
-                    if "station_ids" in zone:
-                        for station in zone_from_source["Stations"]:
-                            if station["stationId"] in zone["station_ids"]:
-                                station["Zone Name"] = zone_from_source["Zone Name"]
-                                stations.append(station)
-                    else:
-                        for station in zone_from_source["Stations"]:
-                            station["Zone Name"] = zone_from_source["Zone Name"]
-                            stations.append(station)
-        return stations
+        yesterday_zones = list_to_dict(yesterday["results"], "Zone Name")
+        today_zones = list_to_dict(today["results"], "Zone Name")
+
+        stations = {}
+        for zone in zones:
+            # Read yesterday's value and record the latest non-negative value.
+            if zone["name"] in yesterday_zones:
+                stations_in_zone = list_to_dict(
+                    yesterday_zones[zone["name"]]["Stations"], "stationId"
+                )
+
+                # Read from all stations if no stations are specified.
+                if "station_ids" not in zone:
+                    station_ids = stations_in_zone.keys()
+                else:
+                    station_ids = zone["station_ids"]
+
+                for station_id in station_ids:
+                    station = stations_in_zone[station_id]
+                    aqi = self.get_latest_value_for_station(station)
+                    aqi.update(
+                        {
+                            "name": station["stationName"],
+                            "zone": zone["name"],
+                        }
+                    )
+                    stations[station_id] = aqi
+
+            # Read today's value and update the latest non-negative value.
+            if zone["name"] in today_zones:
+                stations_in_zone = list_to_dict(
+                    today_zones[zone["name"]]["Stations"], "stationId"
+                )
+
+                # Read from all stations if no stations are specified.
+                if "station_ids" not in zone:
+                    station_ids = stations_in_zone.keys()
+                else:
+                    station_ids = zone["station_ids"]
+
+                for station_id in station_ids:
+                    station = stations_in_zone[station_id]
+                    aqi = self.get_latest_value_for_station(station)
+
+                    # If there's no non-negative value for today, use yesterday's value.
+                    if aqi["value"] < 0:
+                        continue
+
+                    stations[station_id].update(aqi)
+
+        return stations.values()
 
     def get_status(self) -> dict:
-        stations = self.get_stations()
+        stations = self.get_latest_value_by_station()
 
         bad_air_stations = []
         for station in stations:
-            # Some stations don't report aqiHigh
-            if "aqiHigh" not in station:
-                continue
-
-            air_severity_label = "Good"
-            air_quality_is_degraded = False
-
-            current_aqi_value = -300
-            current_aqi_type = None
-            for aqi in station["aqiHigh"]:
-                if aqi["value"] < 0:
-                    break
-
-                current_aqi_value = aqi["value"]
-                current_aqi_type = aqi["parameterName"]
-
-            for severity in sorted(self.air_severity.keys()):
-                if current_aqi_value >= severity:
-                    air_severity_label = self.air_severity[severity]
-                    if severity > 0:
-                        air_quality_is_degraded = True
-                    continue
-
-            if air_quality_is_degraded:
-                bad_air_stations.append(
-                    {
-                        "name": station["stationName"],
-                        "zone": station["Zone Name"],
-                        "type": current_aqi_type,
-                        "value": current_aqi_value,
-                        "status": air_severity_label,
-                        "raw_data": station,
-                    }
-                )
+            if station["status"] != self.air_severity[0]:
+                bad_air_stations.append(station)
 
         alerts = []
         hash_strings = []
