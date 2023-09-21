@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from . import cache
 from .config import config
 from .notify import nofity
@@ -50,7 +52,10 @@ def main():
 
     if hashes_changed:
         if config.get("notify", {}).get("enable"):
-            nofity("Monitor Alert", status_msg)
+            nofity(
+                f"Monitor Alert - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                status_msg,
+            )
 
 
 if __name__ == "__main__":
