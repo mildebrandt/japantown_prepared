@@ -1,6 +1,8 @@
+import logging
 import os
 import yaml
 from dotenv import load_dotenv
+from . import logger
 
 load_dotenv()
 
@@ -12,6 +14,7 @@ config = {
     "global": {
         "cache_directory": "~/.cache/japantown_prepared_monitor",
         "cache_expiry_in_seconds": 600,
+        "log_level": "WARN",
     },
     "notify": {
         "enable": False,
@@ -36,3 +39,5 @@ for module_name, variables in config.items():
         env_name = f"MONITOR__{module_name}__{k}"
         config[module_name][k] = os.environ.get(env_name, v)
         e = os.environ.get(env_name)
+
+logger.setLevel(logging.getLevelName(config["global"]["log_level"].upper()))

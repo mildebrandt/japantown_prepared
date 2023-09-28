@@ -1,18 +1,11 @@
-import logging
-import os
-import time
-import yaml
 import hashlib
 
-from typing import Dict, Optional
 from pathlib import Path
 from inspect import isclass
 from pkgutil import iter_modules
 from pathlib import Path
 from importlib import import_module
-
-
-LOG = logging.getLogger(__name__)
+from .. import logger
 
 
 class DataSource:
@@ -23,7 +16,10 @@ class DataSource:
         self.cache_filename = f"{self.cache_directory}/{self.__class__.__name__}.yaml"
 
     def create_hash(self, hash_strings):
-        return hashlib.md5("".join(sorted(hash_strings)).encode()).hexdigest()
+        sorted_strings = "".join(sorted(hash_strings))
+        _hash = hashlib.md5(sorted_strings.encode()).hexdigest()
+        logger.debug(f"Hashed string: {sorted_strings}\nHash result: {_hash}")
+        return _hash
 
     def get_status(self) -> dict:
         """Returns the current status for the requested monitor in the following format:

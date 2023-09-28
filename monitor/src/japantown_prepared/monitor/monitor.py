@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from . import cache
+from . import cache, logger
 from .config import config
 from .notify import nofity
 from .data_sources import data_source_classes
@@ -24,6 +24,9 @@ def get_statuses() -> dict:
 def process_hashes(hashes: dict) -> bool:
     hashes_changed = False
     previous_hashes = cache.get("hashes")
+    logger.debug(
+        f"Comparing hashes:\n  Previous hashes:\n{previous_hashes}\n  Current hashes:\n{hashes}"
+    )
     if previous_hashes:
         for key, _hash in hashes.items():
             if key not in previous_hashes:
@@ -46,12 +49,11 @@ def main():
         status_msg += status["message"] + "\n"
         hashes[source] = status["hash"]
 
-    print(status_msg)
-
     hashes_changed = process_hashes(hashes)
 
     if hashes_changed:
         if config.get("notify", {}).get("enable"):
+            logger.info(f"Sending notification.")
             nofity(
                 f"Monitor Alert - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
                 status_msg,

@@ -1,15 +1,11 @@
 import os
 import requests
-import logging
 
 from . import DataSource
-from .. import cache
+from .. import cache, logger
 from datetime import date, timedelta
 from typing import Optional
 from urllib.parse import urljoin
-
-
-LOG = logging.getLogger(__name__)
 
 
 def list_to_dict(_list: list, key: str) -> dict:
@@ -32,6 +28,7 @@ class baaqmd(DataSource):
         results = cache.get(self.__class__.__name__)
 
         if results is None:
+            logger.debug("No air quality data in cache.")
             # Get the readings and cache them. We get both today's and
             # yesterday's readings since the data from the API seems to
             # be delayed by 1 to 2 hours. Otherwise we'd miss readings
@@ -59,6 +56,8 @@ class baaqmd(DataSource):
             results = [yesterday, today]
 
             cache.set(self.__class__.__name__, results)
+        else:
+            logger.debug("Found air quality data in cache.")
 
         return results
 
@@ -71,6 +70,9 @@ class baaqmd(DataSource):
 
         # Some stations don't report aqiHigh
         if "aqiHigh" not in station:
+            logger.debug(
+                f"Attribute 'aqiHigh' not found for station {station.get('stationName', '')}."
+            )
             return aqi
 
         for aqiHigh in station["aqiHigh"]:
@@ -175,11 +177,15 @@ class baaqmd(DataSource):
             message = "Air levels normal."
             hash_strings.append("normal")
 
-        return {
+        result = {
             "message": message,
             "alerts": alerts,
             "hash": self.create_hash(hash_strings),
         }
+
+        logger.debug(f"Current air quality: \n{result}")
+
+        return result
 
 
 # Used only for testing
