@@ -13,9 +13,12 @@ def get_statuses() -> dict:
         try:
             statuses[name] = inst.get_status()
         except Exception as e:
-            print(
+            # TODO: send an e-mail to admin when we get errors from APIs.
+            logger.error(
                 f"Error getting data from the {_class.__name__} data source:\n\t{e.args[0]}\n"
             )
+            # Set status to None to indicate that we expected data but got none.
+            statuses[name] = None
     return statuses
 
 
@@ -31,6 +34,10 @@ def process_hashes(hashes: dict) -> bool:
         for key, _hash in hashes.items():
             if key not in previous_hashes:
                 hashes_changed = True
+            elif _hash is None:
+                # If the current hash is None, replace it with the previous value.
+                # This usually happens if we're unable to contact the API.
+                hashes[key] = previous_hashes[key]
             elif previous_hashes[key] != _hash:
                 hashes_changed = True
     else:
@@ -46,8 +53,12 @@ def main():
     status_msg = ""
     hashes = {}
     for source, status in statuses.items():
-        status_msg += status["message"] + "\n"
-        hashes[source] = status["hash"]
+        try:
+            status_msg += status["message"] + "\n"
+            hashes[source] = status["hash"]
+        except TypeError:
+            # If status is None, we'll fall here.
+            hashes[source] = None
 
     hashes_changed = process_hashes(hashes)
 
