@@ -63,6 +63,7 @@ If neither `watershed` nor `station_ids` are provided, then all stations are mon
 <tr>
 <td>alert_levels</td>
 <td>
+
 ```yaml
 alert_levels:
     0: "Good"
@@ -71,6 +72,7 @@ alert_levels:
     201: "Very unhealthy"
     301: "Hazardous"
 ```
+
 </td>
 </tr>
 <tr>
