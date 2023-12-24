@@ -52,10 +52,32 @@ String items in the `config.yaml` file can be overridden from the environment us
 If neither `watershed` nor `station_ids` are provided, then all stations are monitored. If both `watershed` and `station_ids` are provided, then all the stations within the watershed and the additional stations in `station_ids` are monitored.
 
 #### baaqmd config:
-|Item|Description|
-|-|-|
-|authkey|The authkey for the API.|
-|zones|The zones to monitor.|
+<table>
+<tr>
+<td><b>Item</b></td>
+<td><b>Description</b></td>
+</tr>
+<td>authkey</td>
+<td>The authkey for the API.</td>
+</tr>
+<tr>
+<td>alert_levels<td>
+<td>
+```yaml
+alert_levels:
+    0: "Good"
+    101: "Unhealthy for sensitive groups"
+    151: "Unhealthy"
+    201: "Very unhealthy"
+    301: "Hazardous"
+```
+</td>
+</tr>
+<tr>
+<td>zones</td>
+<td>The zones to monitor.</td>
+</tr>
+</table
 
 #### baaqmd zone config:
 |Item|Description|

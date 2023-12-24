@@ -15,7 +15,7 @@ def list_to_dict(_list: list, key: str) -> dict:
 class baaqmd(DataSource):
     base_url = "https://baaqmdrtaqd.azurewebsites.net/"
 
-    air_severity = {
+    alert_levels = {
         0: "Good",
         51: "Moderate",
         101: "Unhealthy for sensitive groups",
@@ -82,9 +82,9 @@ class baaqmd(DataSource):
             aqi["type"] = aqiHigh["parameterName"]
             aqi["value"] = aqiHigh["value"]
 
-        for severity in sorted(self.air_severity.keys()):
+        for severity in sorted(self.alert_levels.keys()):
             if aqi["value"] >= severity:
-                aqi["status"] = self.air_severity[severity]
+                aqi["status"] = self.alert_levels[severity]
             else:
                 break
 
@@ -153,7 +153,7 @@ class baaqmd(DataSource):
 
         bad_air_stations = []
         for station in stations:
-            if station["status"] != self.air_severity[0]:
+            if station["status"] != self.alert_levels[0]:
                 bad_air_stations.append(station)
 
         alerts = []
