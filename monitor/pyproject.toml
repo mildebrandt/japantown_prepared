@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "japantown_prepared_monitor"
-version = "0.0.2"
+version = "0.1.0"
 description = "Monitor air quality, water levels, etc around Japantown San Jose, CA."
 readme = "README.md"
 requires-python = ">=3.9"
