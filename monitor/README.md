@@ -63,7 +63,7 @@ If neither `watershed` nor `station_ids` are provided, then all stations are mon
 <tr>
 <td>alert_levels</td>
 <td>
-Custom alert levels and descriptions for the air quality. The keys are the air quality raw number, and the value is the description to give to that rating.
+Custom alert levels and descriptions for the air quality. The key is the raw air quality number and the value is the description to give to that rating.
 
 ```yaml
 alert_levels:
