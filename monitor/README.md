@@ -63,10 +63,12 @@ If neither `watershed` nor `station_ids` are provided, then all stations are mon
 <tr>
 <td>alert_levels</td>
 <td>
+Custom alert levels and descriptions for the air quality. The keys are the air quality raw number, and the value is the description to give to that rating.
 
 ```yaml
 alert_levels:
     0: "Good"
+    51: "Moderate"
     101: "Unhealthy for sensitive groups"
     151: "Unhealthy"
     201: "Very unhealthy"
