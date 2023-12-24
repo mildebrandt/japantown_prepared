@@ -61,7 +61,7 @@ If neither `watershed` nor `station_ids` are provided, then all stations are mon
 <td>The authkey for the API.</td>
 </tr>
 <tr>
-<td>alert_levels<td>
+<td>alert_levels</td>
 <td>
 ```yaml
 alert_levels:
