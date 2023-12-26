@@ -27,6 +27,7 @@ Running the script will return either a "levels normal" message or a detailed de
 global:
   cache_directory: "~/.cache/japantown_prepared_monitor"
   cache_expiry_in_seconds: 600
+  http_timeout: 10
 
 valleywater:
   watershed: Guadalupe
@@ -42,6 +43,14 @@ baaqmd:
 ```
 
 String items in the `config.yaml` file can be overridden from the environment using the format `MONITOR__{section}__{attribute}`. For example, to override the `authkey` attribute in the `baaqmd` section, set the `MONITOR__baaqmd__authkey` environment variable.
+
+#### global config:
+|Item|Description|
+|-|-|
+|cache_directory|The path to the cache directory.|
+|cache_expiry_in_seconds|The time in seconds after which to request new data from the data source.|
+|log_level|The log level to send to the console.|
+|http_timeout|The time in seconds to wait for data from the data source.|
 
 #### valleywater config:
 |Item|Description|
@@ -63,7 +72,7 @@ If neither `watershed` nor `station_ids` are provided, then all stations are mon
 <tr>
 <td>alert_levels</td>
 <td>
-Custom alert levels and descriptions for the air quality. The key is the raw air quality number and the value is the description to give to that rating.
+Custom alert levels and descriptions for the air quality. The key is the raw air quality number and the value is the description to give to that rating. For example:
 
 ```yaml
 alert_levels:

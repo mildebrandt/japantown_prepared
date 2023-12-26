@@ -15,6 +15,7 @@ config = {
         "cache_directory": "~/.cache/japantown_prepared_monitor",
         "cache_expiry_in_seconds": 600,
         "log_level": "WARN",
+        "http_timeout": 20,
     },
     "notify": {
         "enable": False,

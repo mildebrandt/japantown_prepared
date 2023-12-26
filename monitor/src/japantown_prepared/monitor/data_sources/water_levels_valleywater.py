@@ -15,7 +15,9 @@ class valleywater(DataSource):
 
         if results is None:
             logger.debug("No water level data in cache.")
-            resp = requests.get(urljoin(self.base_url, "/Sensor/current"))
+            resp = requests.get(
+                urljoin(self.base_url, "/Sensor/current"), timeout=self.http_timeout
+            )
             results = resp.json()["streams"]
             cache.set(self.__class__.__name__, results)
         else:

@@ -42,7 +42,13 @@ class baaqmd(DataSource):
                 "startDate": str(date.today()),
                 "parameterId": 49,
             }
-            today = requests.post(url, params=params, headers=headers, json=data).json()
+            today = requests.post(
+                url,
+                params=params,
+                headers=headers,
+                json=data,
+                timeout=self.http_timeout,
+            ).json()
 
             data = {
                 "dataType": "aqi",
@@ -51,7 +57,11 @@ class baaqmd(DataSource):
                 "parameterId": 49,
             }
             yesterday = requests.post(
-                url, params=params, headers=headers, json=data
+                url,
+                params=params,
+                headers=headers,
+                json=data,
+                timeout=self.http_timeout,
             ).json()
             results = [yesterday, today]
 
