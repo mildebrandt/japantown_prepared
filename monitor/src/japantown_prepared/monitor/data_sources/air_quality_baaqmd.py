@@ -132,7 +132,9 @@ class baaqmd(DataSource):
                             "zone": zone["name"],
                         }
                     )
-                    stations[station_id] = aqi
+
+                    if aqi["value"] >= 0:
+                        stations[station_id] = aqi
 
             # Read today's value and update the latest non-negative value.
             if zone["name"] in today_zones:
@@ -149,12 +151,15 @@ class baaqmd(DataSource):
                 for station_id in station_ids:
                     station = stations_in_zone[station_id]
                     aqi = self.get_latest_value_for_station(station)
+                    aqi.update(
+                        {
+                            "name": station["stationName"],
+                            "zone": zone["name"],
+                        }
+                    )
 
-                    # If there's no non-negative value for today, use yesterday's value.
-                    if aqi["value"] < 0:
-                        continue
-
-                    stations[station_id].update(aqi)
+                    if aqi["value"] >= 0:
+                        stations[station_id] = aqi
 
         return stations.values()
 
