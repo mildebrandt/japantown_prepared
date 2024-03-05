@@ -77,14 +77,15 @@ If neither `watershed` nor `station_ids` are provided, then all stations are mon
 <td>zones</td>
 <td>The zones to monitor.</td>
 </tr>
-</table
+</table>
 
 #### baaqmd zone config:
 |Item|Description|
 |-|-|
+|name|The name of the zone to monitor.|
 |station_ids|The IDs of the stations to monitor. **Optional**|
 
-The `zones` are manditory. The `station_ids` are optional. If no station IDs are provided, all stations within that zone will be monitored.
+The `zones` are manitory along with the `name` attribute of the zone. The `station_ids` are optional. If no station IDs are provided, all stations within that zone will be monitored.
 
 ## Adding new data sources
 Each data source has its own file in the `data_sources` directory. In that file is a class which extends from the `DataSource` class. The name of the class is used to load the configuration from the `config.yaml` file. For example, in the `water_levels_valleywater.py` file, there's a class called `valleywater`. In the `config.yaml`, there's a corresponding attribute named `valleywater`. All the attributes under that will be available as instance variables. It's up to each class to implement the `get_status()` method and return the following structure:
