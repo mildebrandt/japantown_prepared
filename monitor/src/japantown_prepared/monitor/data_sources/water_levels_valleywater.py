@@ -77,9 +77,11 @@ class valleywater(DataSource):
                 threshold_description_key = f"threshold{threshold}Desc"
 
                 if (
-                    station[rated_key] != 0 and station["flow"] > station[rated_key]
+                    (station["flow"] is not None and station[rated_key] != 0)
+                    and station["flow"] > station[rated_key]
                 ) or (
-                    station[direct_key] != 0 and station["stage"] > station[direct_key]
+                    (station["stage"] is not None and station[direct_key] != 0)
+                    and station["stage"] > station[direct_key]
                 ):
                     extras = {
                         "severity_label": water_severity[threshold],

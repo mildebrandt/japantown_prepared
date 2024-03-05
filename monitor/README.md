@@ -70,21 +70,8 @@ If neither `watershed` nor `station_ids` are provided, then all stations are mon
 <td>The authkey for the API.</td>
 </tr>
 <tr>
-<td>alert_levels</td>
-<td>
-Custom alert levels and descriptions for the air quality. The key is the raw air quality number and the value is the description to give to that rating. For example:
-
-```yaml
-alert_levels:
-    0: "Good"
-    51: "Moderate"
-    101: "Unhealthy for sensitive groups"
-    151: "Unhealthy"
-    201: "Very unhealthy"
-    301: "Hazardous"
-```
-
-</td>
+<td>alert_level</td>
+<td>The level to start alerting. **Optional** </td>
 </tr>
 <tr>
 <td>zones</td>

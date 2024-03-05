@@ -15,6 +15,7 @@ def list_to_dict(_list: list, key: str) -> dict:
 class baaqmd(DataSource):
     base_url = "https://baaqmdrtaqd.azurewebsites.net/"
 
+    alert_level = 51  # Value to start alerting
     alert_levels = {
         0: "Good",
         51: "Moderate",
@@ -168,7 +169,7 @@ class baaqmd(DataSource):
 
         bad_air_stations = []
         for station in stations:
-            if station["status"] != self.alert_levels[0]:
+            if station["value"] >= self.alert_level:
                 bad_air_stations.append(station)
 
         alerts = []
