@@ -19,9 +19,9 @@ config = {
     },
     "notify": {
         "enable": False,
-        "smtp_host": "email-smtp.us-west-2.amazonaws.com",
-        "smtp_port": 465,
-        "ssl": True,
+        "smtp_host": "localhost",
+        "smtp_port": 25,
+        "ssl": False,
     },
 }
 
