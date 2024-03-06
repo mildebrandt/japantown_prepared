@@ -36,6 +36,10 @@ class valleywater(DataSource):
 
         stations = []
         for station in all_stations:
+            # If the timestamp is None, there's something wrong with the station and we should skip it.
+            if station["timestamp"] is None:
+                continue
+
             # If the station was last updated over 24 hours ago, skip it.
             if (
                 datetime.now(timezone.utc)
