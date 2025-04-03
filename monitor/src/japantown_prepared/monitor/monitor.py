@@ -9,7 +9,14 @@ from .data_sources import data_source_classes
 def get_statuses() -> dict:
     statuses = {}
     for name, _class in data_source_classes.items():
+        if name not in config:
+            continue
+
         inst = _class(**config.get(name, {}), **config.get("global", {}))
+
+        if not inst.enable:
+            continue
+
         try:
             statuses[name] = inst.get_status()
         except Exception as e:

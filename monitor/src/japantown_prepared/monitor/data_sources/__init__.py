@@ -3,13 +3,13 @@ import hashlib
 from pathlib import Path
 from inspect import isclass
 from pkgutil import iter_modules
-from pathlib import Path
 from importlib import import_module
 from .. import logger
 
 
 class DataSource:
     cache_expiry_in_minutes = 10
+    enable = True
 
     def __init__(self, **kwargs) -> None:
         self.__dict__.update(kwargs)

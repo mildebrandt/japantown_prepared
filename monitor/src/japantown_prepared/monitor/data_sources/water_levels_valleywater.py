@@ -70,7 +70,8 @@ class valleywater(DataSource):
             4: "Major Flooding",
         }
 
-        stations = self.get_water_stations(watershed=watershed, station_ids=station_ids)
+        stations = self.get_water_stations(
+            watershed=watershed, station_ids=station_ids)
 
         stations_above_threshold = []
         for station in stations:
@@ -111,6 +112,7 @@ class valleywater(DataSource):
                 message += f"  Name: {station['name']}\n"
                 message += f"  Watershed: {station['watershed']}\n"
                 message += f"  Status: {station['severity_label']}\n"
+                message += f"  URL: https://alert.valleywater.org/?p=sensor&sid={station['gageId']}&disc=f\n"
                 message += f"---\n"
                 message += (
                     f"  Expected conditions: {station['expected_conditions']}\n\n"
