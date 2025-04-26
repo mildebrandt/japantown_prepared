@@ -1,6 +1,7 @@
+import os
 import pandas as pd
-import matplotlib.pyplot as plt
-import re  # Import the regular expression library
+import requests
+import re
 
 call_type_mapping = {
     "ABANDONED VEHICLE": "Service Call",
@@ -191,37 +192,27 @@ call_type_mapping = {
     "VIOLATION OF PROTECTIVE ORDER": "Other",
     "WELFARE CHECK": "Welfare Check",
     "WELFARE CHECK (COMBINED EVENT)": "Welfare Check",
-    "W&I-UNDER JURIS OF JUV COURT": "Other"
+    "W&I-UNDER JURIS OF JUV COURT": "Other",
 }
 
 
-def generate_matplotlib_table(dataframe):
-    """
-    Generates a Matplotlib table from a Pandas DataFrame.
+def download_file(url, filename):
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
 
-    Args:
-        dataframe (pd.DataFrame): The DataFrame to display as a table.
-    """
-    fig, ax = plt.subplots()  # Adjust figure size as needed
-    ax.axis('off')  # Hide the axes
+    with open(filename, "wb") as file:
+        for chunk in response.iter_content(chunk_size=8192):
+            file.write(chunk)
+    print(f"Downloaded '{filename}' successfully.")
 
-    table = ax.table(cellText=dataframe.values,
-                     colLabels=dataframe.columns,
-                     loc='center')
-
-    table.auto_set_font_size(False)
-    table.set_fontsize(10)
-    table.scale(1, 1.2)  # Adjust cell scaling for better readability
-
-    plt.tight_layout()
-    plt.show()
 
 def extract_numeric_address(address_str):
     if isinstance(address_str, str):
-        match = re.search(r'(\d+)', address_str)
+        match = re.search(r"(\d+)", address_str)
         if match:
             return int(match.group(1))
     return None
+
 
 def matches_numeric_range(address_str, ranges):
     try:
@@ -230,63 +221,113 @@ def matches_numeric_range(address_str, ranges):
             address_lower = address_str.lower()
             for start_range, end_range, street in ranges:
                 street_lower = street.lower().strip()
-                street_lower_no_prefix = re.sub(r'^[ns]\s+', '', re.sub(r'^[ew]\s+', '', street_lower)).strip()
-                address_lower_no_prefix = re.sub(r'^[ns]\s+', '', re.sub(r'^[ew]\s+', '', address_lower)).strip()
+                street_lower_no_prefix = re.sub(
+                    r"^[ns]\s+", "", re.sub(r"^[ew]\s+", "", street_lower)
+                ).strip()
+                address_lower_no_prefix = re.sub(
+                    r"^[ns]\s+", "", re.sub(r"^[ew]\s+", "", address_lower)
+                ).strip()
                 street_lower_no_prefix = street_lower.strip()
                 address_lower_no_prefix = address_lower.strip()
 
-                if start_range <= numeric_part <= end_range and street_lower_no_prefix in address_lower_no_prefix:
+                if (
+                    start_range <= numeric_part <= end_range
+                    and street_lower_no_prefix in address_lower_no_prefix
+                ):
                     return True
         return False
     except (ValueError, AttributeError, IndexError):
         return False
 
+
 def is_cross_street_match(address_str, ns_streets, ew_streets):
-    if isinstance(address_str, str) and '&' in address_str:
-        ns_lower_no_prefix = [re.sub(r'^[ns]\s+', '', s.lower().strip()) for s in ns_streets]
-        ew_lower_no_prefix = [re.sub(r'^[ew]\s+', '', s.lower().strip()) for s in ew_streets]
-        parts = [part.lower().strip() for part in address_str.split('&')]
+    if isinstance(address_str, str) and "&" in address_str:
+        ns_lower_no_prefix = [
+            re.sub(r"^[ns]\s+", "", s.lower().strip()) for s in ns_streets
+        ]
+        ew_lower_no_prefix = [
+            re.sub(r"^[ew]\s+", "", s.lower().strip()) for s in ew_streets
+        ]
+        parts = [part.lower().strip() for part in address_str.split("&")]
         if len(parts) == 2:
-            street1_no_prefix = re.sub(r'^[ns]\s+', '', parts[0]).strip()
-            street2_no_prefix = re.sub(r'^[ew]\s+', '', parts[1]).strip()
-            match_ns_ew = (street1_no_prefix in ns_lower_no_prefix and street2_no_prefix in ew_lower_no_prefix)
-            match_ew_ns = (street1_no_prefix in ew_lower_no_prefix and street2_no_prefix in ns_lower_no_prefix)
+            street1_no_prefix = re.sub(r"^[ns]\s+", "", parts[0]).strip()
+            street2_no_prefix = re.sub(r"^[ew]\s+", "", parts[1]).strip()
+            match_ns_ew = (
+                street1_no_prefix in ns_lower_no_prefix
+                and street2_no_prefix in ew_lower_no_prefix
+            )
+            match_ew_ns = (
+                street1_no_prefix in ew_lower_no_prefix
+                and street2_no_prefix in ns_lower_no_prefix
+            )
             return match_ns_ew or match_ew_ns
     return False
 
-def filter_data_by_address_and_offense_datetime(csv_filepath, address_column, numeric_address_ranges, north_south_streets, east_west_streets, offense_date_column, offense_time_column, start_datetime_str, end_datetime_str, call_type_filter_list=None):
+
+def filter_data_by_address_and_offense_datetime(
+    csv_filepath,
+    address_column,
+    numeric_address_ranges,
+    north_south_streets,
+    east_west_streets,
+    offense_date_column,
+    offense_time_column,
+    start_datetime_str,
+    end_datetime_str,
+    call_type_filter_list=None,
+):
     try:
         df = pd.read_csv(csv_filepath)
 
         # Ensure the address column is treated as string and handle potential NaNs
-        df[address_column] = df[address_column].astype(str).str.lower().str.strip()
-        df = df[df[address_column] != 'nan'] # Remove rows where the address is 'nan'
+        df[address_column] = df[address_column].astype(
+            str).str.lower().str.strip()
+        # Remove rows where the address is 'nan'
+        df = df[df[address_column] != "nan"]
 
-        df['CALL_CATEGORY'] = df['CALL_TYPE'].map(call_type_mapping).fillna('Uncategorized')
+        df["CALL_CATEGORY"] = (
+            df["CALL_TYPE"].map(call_type_mapping).fillna("Uncategorized")
+        )
 
         # Filter by numeric address ranges (only if '&' is NOT present)
         numeric_filtered_df = df[
-            df[address_column].apply(lambda x: '&' not in x and matches_numeric_range(x, numeric_address_ranges))
+            df[address_column].apply(
+                lambda x: "&" not in x
+                and matches_numeric_range(x, numeric_address_ranges)
+            )
         ].copy()
 
         # Filter by cross streets (only if '&' IS present)
         cross_street_filtered_df = df[
-            df[address_column].apply(lambda x: '&' in x and is_cross_street_match(x, north_south_streets, east_west_streets))
+            df[address_column].apply(
+                lambda x: "&" in x
+                and is_cross_street_match(x, north_south_streets, east_west_streets)
+            )
         ].copy()
 
         # Combine the two address-filtered DataFrames
-        combined_address_df = pd.concat([numeric_filtered_df, cross_street_filtered_df]).drop_duplicates()
+        combined_address_df = pd.concat(
+            [numeric_filtered_df, cross_street_filtered_df]
+        ).drop_duplicates()
 
         # --- Datetime Conversion and Filtering ---
         if not combined_address_df.empty:
-            date_format = '%m/%d/%Y %I:%M:%S %p'
-            combined_address_df['OFFENSE_DATETIME'] = pd.to_datetime(combined_address_df[offense_date_column], format=date_format).dt.date.astype(str) + ' ' + combined_address_df[offense_time_column]
-            combined_address_df['OFFENSE_DATETIME'] = pd.to_datetime(combined_address_df['OFFENSE_DATETIME'], format='%Y-%m-%d %H:%M:%S')
+            date_format = "%m/%d/%Y %I:%M:%S %p"
+            combined_address_df["OFFENSE_DATETIME"] = (
+                pd.to_datetime(
+                    combined_address_df[offense_date_column], format=date_format
+                ).dt.date.astype(str)
+                + " "
+                + combined_address_df[offense_time_column]
+            )
+            combined_address_df["OFFENSE_DATETIME"] = pd.to_datetime(
+                combined_address_df["OFFENSE_DATETIME"], format="%Y-%m-%d %H:%M:%S"
+            )
             start_datetime = pd.to_datetime(start_datetime_str)
             end_datetime = pd.to_datetime(end_datetime_str)
             datetime_filtered_df = combined_address_df[
-                (combined_address_df['OFFENSE_DATETIME'] >= start_datetime) &
-                (combined_address_df['OFFENSE_DATETIME'] <= end_datetime)
+                (combined_address_df["OFFENSE_DATETIME"] >= start_datetime)
+                & (combined_address_df["OFFENSE_DATETIME"] <= end_datetime)
             ].copy()
         else:
             return pd.DataFrame()
@@ -295,7 +336,7 @@ def filter_data_by_address_and_offense_datetime(csv_filepath, address_column, nu
         # --- Call Type Filtering ---
         if call_type_filter_list and not datetime_filtered_df.empty:
             final_filtered_df = datetime_filtered_df[
-                datetime_filtered_df['CALL_TYPE'].isin(call_type_filter_list)
+                datetime_filtered_df["CALL_TYPE"].isin(call_type_filter_list)
             ].copy()
             return final_filtered_df
         elif not datetime_filtered_df.empty:
@@ -310,54 +351,81 @@ def filter_data_by_address_and_offense_datetime(csv_filepath, address_column, nu
         print(f"An error occurred: {e}")
         return pd.DataFrame()
 
-csv_file = 'policecalls2025.csv'
-address_column = 'ADDRESS'
+
+file_url = "https://data.sanjoseca.gov/dataset/c5929f1b-7dbe-445e-83ed-35cca0d3ca8b/resource/0bc5ea69-fcc7-4998-ab6c-70c3a0df778b/download/policecalls2025.csv"
+csv_file = "policecalls.csv"
+
+if not os.path.exists(csv_file):
+    download_file(file_url, csv_file)
+
+address_column = "ADDRESS"
 numeric_ranges = [
-    (500, 899, 'N 2ND ST'),
-    (500, 899, 'N 3RD ST'),
-    (500, 899, 'N 4TH ST'),
-    (500, 899, 'N 5TH ST'),
-    (500, 899, 'N 6TH ST'),
-    (500, 899, 'N 7TH ST'),
-    (500, 899, 'N 8TH ST'),
-    (500, 899, 'N 9TH ST'),
-    (0, 400, 'E EMPIRE ST'),
-    (0, 400, 'JACKSON ST'),
-    (0, 400, 'E TAYLOR ST'),
-    (0, 400, 'E MISSION ST'),
-    (0, 400, 'E HEDDING ST'),
+    (500, 899, "N 2ND ST"),
+    (500, 899, "N 3RD ST"),
+    (500, 899, "N 4TH ST"),
+    (500, 899, "N 5TH ST"),
+    (500, 899, "N 6TH ST"),
+    (500, 899, "N 7TH ST"),
+    (500, 899, "N 8TH ST"),
+    (500, 899, "N 9TH ST"),
+    (0, 400, "E EMPIRE ST"),
+    (0, 400, "JACKSON ST"),
+    (0, 400, "E TAYLOR ST"),
+    (0, 400, "E MISSION ST"),
+    (0, 400, "E HEDDING ST"),
 ]
-north_south_streets_list = ['N 2ND ST', 'N 3RD ST', 'N 4TH ST', 'N 5TH ST', 'N 6TH ST', 'N 7TH ST', 'N 8TH ST', 'N 9TH ST']
-east_west_streets_list = ['EMPIRE ST', 'JACKSON ST', 'TAYLOR ST', 'MISSION ST', 'HEDDING ST']
-offense_date_column_name = 'OFFENSE_DATE'
-offense_time_column_name = 'OFFENSE_TIME'
-start_datetime_filter = '2025-03-01 00:00:00'
-end_datetime_filter = '2025-03-30 23:59:59'
-call_types_to_include = ['PEDESTRIAN STOP', 'TRESPASSING']
+north_south_streets_list = [
+    "N 2ND ST",
+    "N 3RD ST",
+    "N 4TH ST",
+    "N 5TH ST",
+    "N 6TH ST",
+    "N 7TH ST",
+    "N 8TH ST",
+    "N 9TH ST",
+]
+east_west_streets_list = [
+    "EMPIRE ST",
+    "JACKSON ST",
+    "TAYLOR ST",
+    "MISSION ST",
+    "HEDDING ST",
+]
+offense_date_column_name = "OFFENSE_DATE"
+offense_time_column_name = "OFFENSE_TIME"
+start_datetime_filter = "2025-04-01 00:00:00"
+end_datetime_filter = "2025-04-30 23:59:59"
 call_types_to_include = []
 
 filtered_data = filter_data_by_address_and_offense_datetime(
-    csv_file, address_column, numeric_ranges, north_south_streets_list, east_west_streets_list, offense_date_column_name, offense_time_column_name, start_datetime_filter, end_datetime_filter, call_types_to_include
+    csv_file,
+    address_column,
+    numeric_ranges,
+    north_south_streets_list,
+    east_west_streets_list,
+    offense_date_column_name,
+    offense_time_column_name,
+    start_datetime_filter,
+    end_datetime_filter,
+    call_types_to_include,
 )
 
 if not filtered_data.empty:
-    call_type_counts = filtered_data['CALL_CATEGORY'].value_counts()
-    plt.figure(figsize=(10, 10))
-    plt.pie(call_type_counts, labels=call_type_counts.index, autopct='%1.1f%%', startangle=140)
-    plt.axis('equal')
-    plt.savefig("crime_categories.png")
-    filtered_data.to_csv('crimes.csv', index=False)
+    filtered_data.to_csv("crimes.csv", index=False)
 
-    category_counts = filtered_data['CALL_CATEGORY'].value_counts().reset_index()
-    category_counts.columns = ['Category', 'Incidents']
+    category_counts = filtered_data["CALL_CATEGORY"].value_counts(
+    ).reset_index()
+    category_counts.columns = ["Category", "Incidents"]
 
-    markdown_table = category_counts.to_markdown(index=False, tablefmt="mixed_outline")
+    markdown_table = category_counts.to_markdown(
+        index=False, tablefmt="mixed_outline")
     print(markdown_table)
 
-    type_counts = filtered_data['CALL_TYPE'].value_counts().reset_index()
-    type_counts.columns = ['CALL_TYPE', 'Number of Incidents']
+    type_counts = filtered_data["CALL_TYPE"].value_counts().reset_index()
+    type_counts.columns = ["CALL_TYPE", "Number of Incidents"]
 
-    markdown_table = type_counts.to_markdown(index=False, tablefmt="mixed_outline")
+    markdown_table = type_counts.to_markdown(
+        index=False, tablefmt="mixed_outline")
     print(markdown_table)
 else:
     print("\nNo data matches the specified criteria.")

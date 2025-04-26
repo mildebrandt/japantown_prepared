@@ -1,0 +1,7 @@
+# Application
+requests~=2.32
+pandas~=2.2
+
+# Development
+black~=23.3
+pre-commit~=3.3
