@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ -z "$1" ];then
+    echo "Usage: create_jtp_image KG805_CERT_radio.img"
+    exit 1
+fi
+
+if ! [ -f "$1" ];then
+    echo "File not found"
+    exit 1
+fi
+
+filename="${1}"
+filename_no_ext="${filename%.*}"
+jtp_image="${filename_no_ext} plus JTP.img"
+cp "${filename}" "${jtp_image}"
+
+chirpc -r Wouxun_KG-805G --mmap "${jtp_image}" --set-mem-freq 462662500 --set-mem-tsqlon --set-mem-tsql 131.8 --set-mem-mode FM --set-mem-name JTBUS 109
+chirpc -r Wouxun_KG-805G --mmap "${jtp_image}" --set-mem-freq 462675000 --set-mem-tsqlon --set-mem-tsql 67.0 --set-mem-mode FM --set-mem-name JTP 110
