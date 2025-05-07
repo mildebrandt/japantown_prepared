@@ -1,11 +1,11 @@
 # This was written by Gemini AI, may need some cleanup
 import os
+import re
+from datetime import datetime
+
 import pandas as pd
 import requests
-import re
 import tomllib as toml
-
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 
