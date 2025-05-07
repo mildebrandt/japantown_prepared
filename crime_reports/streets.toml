@@ -1,0 +1,34 @@
+address_ranges = [
+    [500, 899, "N 2ND ST"],
+    [500, 899, "N 3RD ST"],
+    [500, 899, "N 4TH ST"],
+    [500, 899, "N 5TH ST"],
+    [500, 899, "N 6TH ST"],
+    [500, 899, "N 7TH ST"],
+    [500, 899, "N 8TH ST"],
+    [500, 899, "N 9TH ST"],
+    [0, 400, "E EMPIRE ST"],
+    [0, 400, "JACKSON ST"],
+    [0, 400, "E TAYLOR ST"],
+    [0, 400, "E MISSION ST"],
+    [0, 400, "E HEDDING ST"],
+]
+
+[cross_streets]
+north_south = [
+    "N 2ND ST",
+    "N 3RD ST",
+    "N 4TH ST",
+    "N 5TH ST",
+    "N 6TH ST",
+    "N 7TH ST",
+    "N 8TH ST",
+    "N 9TH ST",
+]
+east_west = [
+    "EMPIRE ST",
+    "JACKSON ST",
+    "TAYLOR ST",
+    "MISSION ST",
+    "HEDDING ST",
+]
