@@ -2,8 +2,8 @@ from datetime import datetime
 
 from . import cache, logger
 from .config import config
-from .notify import nofity
 from .data_sources import data_source_classes
+from .notify import nofity
 
 
 def get_statuses() -> dict:
@@ -71,7 +71,7 @@ def main():
 
     if hashes_changed:
         if config.get("notify", {}).get("enable"):
-            logger.info(f"Sending notification.")
+            logger.info("Sending notification.")
             nofity(
                 f"Monitor Alert - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
                 status_msg,

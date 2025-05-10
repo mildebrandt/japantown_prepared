@@ -1,9 +1,9 @@
 import os
-
 from typing import Optional
+
 from diskcache import Cache
+
 from .config import config
-from . import logger
 
 cache_directory = os.path.expanduser(config["global"]["cache_directory"])
 

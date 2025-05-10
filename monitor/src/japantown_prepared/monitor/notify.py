@@ -1,12 +1,10 @@
 import os
-
-from typing import List, Optional
-from smtplib import SMTP, SMTP_SSL
-
 from email.message import EmailMessage
 from email.utils import formataddr
+from smtplib import SMTP, SMTP_SSL
+from typing import List, Optional
+
 from .config import config
-from . import logger
 
 SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")

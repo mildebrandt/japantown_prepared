@@ -56,20 +56,24 @@ def matches_numeric_range(address_str, ranges):
 def is_cross_street_match(address_str, cross_streets):
     if isinstance(address_str, str) and "&" in address_str:
         ns_lower_no_prefix = [
-            re.sub(r"^[ns]\s+", "", s.lower().strip()) for s in cross_streets["north_south"]
+            re.sub(r"^[ns]\s+", "", s.lower().strip())
+            for s in cross_streets["north_south"]
         ]
         ew_lower_no_prefix = [
-            re.sub(r"^[ew]\s+", "", s.lower().strip()) for s in cross_streets["east_west"]
+            re.sub(r"^[ew]\s+", "", s.lower().strip())
+            for s in cross_streets["east_west"]
         ]
         parts = [part.lower().strip() for part in address_str.split("&")]
         if len(parts) == 2:
             street1_no_prefix = re.sub(r"^[ns]\s+", "", parts[0]).strip()
             street2_no_prefix = re.sub(r"^[ew]\s+", "", parts[1]).strip()
             match_ns_ew = (
-                street1_no_prefix in ns_lower_no_prefix and street2_no_prefix in ew_lower_no_prefix
+                street1_no_prefix in ns_lower_no_prefix
+                and street2_no_prefix in ew_lower_no_prefix
             )
             match_ew_ns = (
-                street1_no_prefix in ew_lower_no_prefix and street2_no_prefix in ns_lower_no_prefix
+                street1_no_prefix in ew_lower_no_prefix
+                and street2_no_prefix in ns_lower_no_prefix
             )
             return match_ns_ew or match_ew_ns
     return False
@@ -103,7 +107,8 @@ def filter_data_by_address_and_offense_datetime(
         # Filter by numeric address ranges (only if '&' is NOT present)
         numeric_filtered_df = df[
             df["ADDRESS"].apply(
-                lambda x: "&" not in x and matches_numeric_range(x, numeric_address_ranges)
+                lambda x: "&" not in x
+                and matches_numeric_range(x, numeric_address_ranges)
             )
         ].copy()
     else:
@@ -112,7 +117,9 @@ def filter_data_by_address_and_offense_datetime(
     if cross_streets is not None:
         # Filter by cross streets (only if '&' IS present)
         cross_street_filtered_df = df[
-            df["ADDRESS"].apply(lambda x: "&" in x and is_cross_street_match(x, cross_streets))
+            df["ADDRESS"].apply(
+                lambda x: "&" in x and is_cross_street_match(x, cross_streets)
+            )
         ].copy()
     else:
         cross_street_filtered_df = None
@@ -135,7 +142,9 @@ def filter_data_by_address_and_offense_datetime(
     # Combine offense date and time into new datetime column
     date_format = "%m/%d/%Y %I:%M:%S %p"
     combined_address_df["OFFENSE_DATETIME"] = (
-        pd.to_datetime(combined_address_df["OFFENSE_DATE"], format=date_format).dt.date.astype(str)
+        pd.to_datetime(
+            combined_address_df["OFFENSE_DATE"], format=date_format
+        ).dt.date.astype(str)
         + " "
         + combined_address_df["OFFENSE_TIME"]
     )
@@ -189,7 +198,9 @@ if __name__ == "__main__":
         download_file(settings["data_url"], csv_file)
 
     end_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    start_date = (datetime.now() - relativedelta(months=1)).strftime("%Y-%m-%d %H:%M:%S")
+    start_date = (datetime.now() - relativedelta(months=1)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
     filtered_data = filter_data_by_address_and_offense_datetime(
         csv_file,
@@ -202,10 +213,14 @@ if __name__ == "__main__":
 
     if not filtered_data.empty:
         if call_categories is not None:
-            category_counts = filtered_data["CALL_CATEGORY"].value_counts().reset_index()
+            category_counts = (
+                filtered_data["CALL_CATEGORY"].value_counts().reset_index()
+            )
             category_counts.columns = ["Category", "Incidents"]
 
-            markdown_table = category_counts.to_markdown(index=False, tablefmt="fancy_outline")
+            markdown_table = category_counts.to_markdown(
+                index=False, tablefmt="fancy_outline"
+            )
             print(markdown_table)
 
         type_counts = filtered_data["CALL_TYPE"].value_counts().reset_index()

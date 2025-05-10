@@ -1,7 +1,9 @@
 import logging
 import os
+
 import yaml
 from dotenv import load_dotenv
+
 from . import logger
 
 load_dotenv()

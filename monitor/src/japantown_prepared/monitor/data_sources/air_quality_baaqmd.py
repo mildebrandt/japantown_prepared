@@ -1,11 +1,12 @@
 import os
-import requests
-
-from . import DataSource
-from .. import cache, logger
 from datetime import date, timedelta
 from typing import Optional
 from urllib.parse import urljoin
+
+import requests
+
+from .. import cache, logger
+from . import DataSource
 
 
 def list_to_dict(_list: list, key: str) -> dict:
@@ -184,7 +185,7 @@ class baaqmd(DataSource):
                 message += f"  Type: {station['type']}\n"
                 message += f"  Value: {station['value']}\n"
                 message += f"  Status: {station['status']}\n"
-                message += f"---\n"
+                message += "---\n"
                 alerts.append(station)
                 hash_strings.append(
                     f"{station['zone']}{station['name']}{station['status']}"

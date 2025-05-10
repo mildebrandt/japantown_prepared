@@ -1,10 +1,11 @@
+from datetime import datetime, timezone
+from typing import Dict, List
+from urllib.parse import urljoin
+
 import requests
 
-from typing import List, Dict
-from . import DataSource
 from .. import cache, logger
-from datetime import datetime, timezone
-from urllib.parse import urljoin
+from . import DataSource
 
 
 class valleywater(DataSource):
@@ -70,8 +71,7 @@ class valleywater(DataSource):
             4: "Major Flooding",
         }
 
-        stations = self.get_water_stations(
-            watershed=watershed, station_ids=station_ids)
+        stations = self.get_water_stations(watershed=watershed, station_ids=station_ids)
 
         stations_above_threshold = []
         for station in stations:
@@ -113,7 +113,7 @@ class valleywater(DataSource):
                 message += f"  Watershed: {station['watershed']}\n"
                 message += f"  Status: {station['severity_label']}\n"
                 message += f"  URL: https://alert.valleywater.org/?p=sensor&sid={station['gageId']}&disc=f\n"
-                message += f"---\n"
+                message += "---\n"
                 message += (
                     f"  Expected conditions: {station['expected_conditions']}\n\n"
                 )
