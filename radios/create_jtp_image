@@ -15,6 +15,11 @@ filename_no_ext="${filename%.*}"
 jtp_image="${filename_no_ext} plus JTP.img"
 cp "${filename}" "${jtp_image}"
 
+# Channel 5, CTCSS 131.8
 chirpc -r Wouxun_KG-805G --mmap "${jtp_image}" --set-mem-freq 462662500 --set-mem-tsqlon --set-mem-tsql 131.8 --set-mem-mode FM --set-mem-name JTBUS 109
-chirpc -r Wouxun_KG-805G --mmap "${jtp_image}" --set-mem-freq 462575000 --set-mem-tsqlon --set-mem-tsql 71.9 --set-mem-mode FM --set-mem-name JTP1 110
-chirpc -r Wouxun_KG-805G --mmap "${jtp_image}" --set-mem-freq 462675000 --set-mem-tsqlon --set-mem-tsql 71.9 --set-mem-mode FM --set-mem-name JTP2 111
+
+# Channel 16, CTCSS 71.9
+chirpc -r Wouxun_KG-805G --mmap "${jtp_image}" --set-mem-freq 462575000 --set-mem-tsqlon --set-mem-tsql 71.9 --set-mem-mode FM --set-mem-name JTP1HP 110
+
+# Channel 3, CTCSS 71.9
+chirpc -r Wouxun_KG-805G --mmap "${jtp_image}" --set-mem-freq 462612500 --set-mem-tsqlon --set-mem-tsql 71.9 --set-mem-mode FM --set-mem-name JTP2LP 111
