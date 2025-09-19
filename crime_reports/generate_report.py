@@ -171,6 +171,37 @@ def filter_data_by_address_and_offense_datetime(
         return pd.DataFrame()
 
 
+def print_data(
+    df, columns=None, tablefmt="fancy_outline", with_total=True, sort_by=None
+):
+    _df = df.copy()
+    if columns is not None:
+        _df.columns = columns
+
+    if sort_by is not None:
+        _df = _df.sort_values(by=sort_by, ascending=False)
+
+    if with_total:
+        total_col1 = _df[_df.columns[1]].sum()
+        total_col2 = _df[_df.columns[2]].sum()
+        _df = pd.concat(
+            [
+                _df,
+                pd.DataFrame(
+                    {
+                        _df.columns[0]: ["Total"],
+                        _df.columns[1]: [total_col1],
+                        _df.columns[2]: [total_col2],
+                    }
+                ),
+            ],
+            ignore_index=True,
+        )
+
+    markdown_table = _df.to_markdown(index=False, tablefmt=tablefmt)
+    print(markdown_table)
+
+
 if __name__ == "__main__":
     csv_file = "policecalls.csv"
 
@@ -197,12 +228,12 @@ if __name__ == "__main__":
     if settings and not os.path.exists(csv_file):
         download_file(settings["data_url"], csv_file)
 
-    end_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     start_date = (datetime.now() - relativedelta(months=1)).strftime(
         "%Y-%m-%d %H:%M:%S"
     )
+    end_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    filtered_data = filter_data_by_address_and_offense_datetime(
+    this_months_data = filter_data_by_address_and_offense_datetime(
         csv_file,
         call_categories,
         streets.get("address_ranges"),
@@ -211,22 +242,46 @@ if __name__ == "__main__":
         end_date,
     )
 
-    if not filtered_data.empty:
+    start_date = (datetime.now() - relativedelta(months=2)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    end_date = (datetime.now() - relativedelta(months=1)).strftime("%Y-%m-%d %H:%M:%S")
+
+    last_months_data = filter_data_by_address_and_offense_datetime(
+        csv_file,
+        call_categories,
+        streets.get("address_ranges"),
+        streets.get("cross_streets"),
+        start_date,
+        end_date,
+    )
+
+    if not this_months_data.empty and not last_months_data.empty:
         if call_categories is not None:
-            category_counts = (
-                filtered_data["CALL_CATEGORY"].value_counts().reset_index()
-            )
-            category_counts.columns = ["Category", "Incidents"]
+            column_name = "CALL_CATEGORY"
+        else:
+            column_name = "CALL_TYPE"
 
-            markdown_table = category_counts.to_markdown(
-                index=False, tablefmt="fancy_outline"
-            )
-            print(markdown_table)
-
-        type_counts = filtered_data["CALL_TYPE"].value_counts().reset_index()
-        type_counts.columns = ["Call Type", "Incidents"]
-
-        markdown_table = type_counts.to_markdown(index=False, tablefmt="fancy_outline")
-        print(markdown_table)
+        this_months_category_counts = (
+            this_months_data["CALL_CATEGORY"].value_counts().reset_index()
+        )
+        last_months_category_counts = (
+            last_months_data["CALL_CATEGORY"].value_counts().reset_index()
+        )
+        combined_data = pd.merge(
+            this_months_category_counts,
+            last_months_category_counts,
+            on="CALL_CATEGORY",
+            how="outer",
+        ).fillna(0)
+        print_data(
+            combined_data,
+            columns=[
+                "Category",
+                "This Month",
+                "Last Month",
+            ],
+            sort_by="This Month",
+        )
     else:
         print("\nNo data matches the specified criteria.")
