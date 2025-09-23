@@ -1,4 +1,3 @@
-# This was written by Gemini AI, may need some cleanup
 import os
 import re
 from datetime import datetime
@@ -7,6 +6,12 @@ import pandas as pd
 import requests
 import tomllib as toml
 from dateutil.relativedelta import relativedelta
+
+TWO_MONTHS_AGO = (datetime.now() - relativedelta(months=2)).strftime(
+    "%Y-%m-%d %H:%M:%S"
+)
+ONE_MONTH_AGO = (datetime.now() - relativedelta(months=1)).strftime("%Y-%m-%d %H:%M:%S")
+NOW = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def download_file(url, filename):
@@ -27,6 +32,16 @@ def extract_numeric_address(address_str):
     return None
 
 
+def get_dataframe_from_csv(csv_filepath):
+    df = pd.read_csv(csv_filepath)
+    # Ensure the address column is treated as string and handle potential NaNs
+    df["ADDRESS"] = df["ADDRESS"].astype(str).str.lower().str.strip()
+    # Remove rows where the address is 'nan'
+    df = df[df["ADDRESS"] != "nan"]
+
+    return df
+
+
 def matches_numeric_range(address_str, ranges):
     try:
         numeric_part = extract_numeric_address(address_str)
@@ -34,18 +49,9 @@ def matches_numeric_range(address_str, ranges):
             address_lower = address_str.lower()
             for start_range, end_range, street in ranges:
                 street_lower = street.lower().strip()
-                street_lower_no_prefix = re.sub(
-                    r"^[ns]\s+", "", re.sub(r"^[ew]\s+", "", street_lower)
-                ).strip()
-                address_lower_no_prefix = re.sub(
-                    r"^[ns]\s+", "", re.sub(r"^[ew]\s+", "", address_lower)
-                ).strip()
-                street_lower_no_prefix = street_lower.strip()
-                address_lower_no_prefix = address_lower.strip()
-
                 if (
                     start_range <= numeric_part <= end_range
-                    and street_lower_no_prefix in address_lower_no_prefix
+                    and street_lower in address_lower
                 ):
                     return True
         return False
@@ -53,7 +59,7 @@ def matches_numeric_range(address_str, ranges):
         return False
 
 
-def is_cross_street_match(address_str, cross_streets):
+def matches_cross_street(address_str, cross_streets):
     if isinstance(address_str, str) and "&" in address_str:
         ns_lower_no_prefix = [
             re.sub(r"^[ns]\s+", "", s.lower().strip())
@@ -79,30 +85,41 @@ def is_cross_street_match(address_str, cross_streets):
     return False
 
 
-def filter_data_by_address_and_offense_datetime(
-    csv_filepath,
-    call_types=None,
-    numeric_address_ranges=None,
-    cross_streets=None,
-    start_datetime_str=None,
-    end_datetime_str=None,
-    call_type_filter_list=None,
-):
+def add_datetime_column(df):
+    date_format = "%m/%d/%Y %I:%M:%S %p"
+    df["OFFENSE_DATETIME"] = (
+        pd.to_datetime(df["OFFENSE_DATE"], format=date_format).dt.date.astype(str)
+        + " "
+        + df["OFFENSE_TIME"]
+    )
+
+    df["OFFENSE_DATETIME"] = pd.to_datetime(
+        df["OFFENSE_DATETIME"], format="%Y-%m-%d %H:%M:%S"
+    )
+
+    return df
+
+
+def filter_by_datetime(df, start_datetime_str=None, end_datetime_str=None):
     if start_datetime_str is None:
         start_datetime_str = "1900-01-01 01:00:00"
 
     if end_datetime_str is None:
         end_datetime_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    df = pd.read_csv(csv_filepath)
-    # Ensure the address column is treated as string and handle potential NaNs
-    df["ADDRESS"] = df["ADDRESS"].astype(str).str.lower().str.strip()
-    # Remove rows where the address is 'nan'
-    df = df[df["ADDRESS"] != "nan"]
+    start_datetime = pd.to_datetime(start_datetime_str)
+    end_datetime = pd.to_datetime(end_datetime_str)
+    return df[
+        (df["OFFENSE_DATETIME"] >= start_datetime)
+        & (df["OFFENSE_DATETIME"] <= end_datetime)
+    ]
 
-    if call_types is not None:
-        df["CALL_CATEGORY"] = df["CALL_TYPE"].map(call_types).fillna("Uncategorized")
 
+def filter_by_address(
+    df,
+    numeric_address_ranges=None,
+    cross_streets=None,
+):
     if numeric_address_ranges is not None:
         # Filter by numeric address ranges (only if '&' is NOT present)
         numeric_filtered_df = df[
@@ -110,68 +127,31 @@ def filter_data_by_address_and_offense_datetime(
                 lambda x: "&" not in x
                 and matches_numeric_range(x, numeric_address_ranges)
             )
-        ].copy()
+        ]
     else:
-        numeric_filtered_df = None
+        numeric_filtered_df = df[[]]
 
     if cross_streets is not None:
         # Filter by cross streets (only if '&' IS present)
         cross_street_filtered_df = df[
             df["ADDRESS"].apply(
-                lambda x: "&" in x and is_cross_street_match(x, cross_streets)
+                lambda x: "&" in x and matches_cross_street(x, cross_streets)
             )
-        ].copy()
+        ]
     else:
-        cross_street_filtered_df = None
+        cross_street_filtered_df = df[[]]
 
-    if numeric_filtered_df is not None and cross_street_filtered_df is not None:
-        # Combine the two address-filtered DataFrames
-        combined_address_df = pd.concat(
-            [numeric_filtered_df, cross_street_filtered_df]
-        ).drop_duplicates()
-    elif numeric_filtered_df is not None:
-        combined_address_df = numeric_filtered_df
-    elif cross_street_filtered_df is not None:
-        combined_address_df = cross_street_filtered_df
-    else:
-        combined_address_df = df
+    combined_address_df = pd.concat(
+        [numeric_filtered_df, cross_street_filtered_df]
+    ).drop_duplicates()
 
     if combined_address_df.empty:
         return pd.DataFrame()
 
-    # Combine offense date and time into new datetime column
-    date_format = "%m/%d/%Y %I:%M:%S %p"
-    combined_address_df["OFFENSE_DATETIME"] = (
-        pd.to_datetime(
-            combined_address_df["OFFENSE_DATE"], format=date_format
-        ).dt.date.astype(str)
-        + " "
-        + combined_address_df["OFFENSE_TIME"]
-    )
-    combined_address_df["OFFENSE_DATETIME"] = pd.to_datetime(
-        combined_address_df["OFFENSE_DATETIME"], format="%Y-%m-%d %H:%M:%S"
-    )
-
-    start_datetime = pd.to_datetime(start_datetime_str)
-    end_datetime = pd.to_datetime(end_datetime_str)
-    datetime_filtered_df = combined_address_df[
-        (combined_address_df["OFFENSE_DATETIME"] >= start_datetime)
-        & (combined_address_df["OFFENSE_DATETIME"] <= end_datetime)
-    ].copy()
-
-    # --- Call Type Filtering ---
-    if call_type_filter_list and not datetime_filtered_df.empty:
-        final_filtered_df = datetime_filtered_df[
-            datetime_filtered_df["CALL_TYPE"].isin(call_type_filter_list)
-        ].copy()
-        return final_filtered_df
-    elif not datetime_filtered_df.empty:
-        return datetime_filtered_df
-    else:
-        return pd.DataFrame()
+    return combined_address_df
 
 
-def print_data(
+def get_table(
     df, columns=None, tablefmt="fancy_outline", with_total=True, sort_by=None
 ):
     _df = df.copy()
@@ -199,7 +179,52 @@ def print_data(
         )
 
     markdown_table = _df.to_markdown(index=False, tablefmt=tablefmt)
-    print(markdown_table)
+    return markdown_table
+
+
+def print_data(df):
+    # --- Date and time filtering
+    this_months_data = df[
+        (df["OFFENSE_DATETIME"] >= ONE_MONTH_AGO) & (df["OFFENSE_DATETIME"] <= NOW)
+    ]
+
+    last_months_data = df[
+        (df["OFFENSE_DATETIME"] >= TWO_MONTHS_AGO)
+        & (df["OFFENSE_DATETIME"] <= ONE_MONTH_AGO)
+    ]
+
+    if not this_months_data.empty and not last_months_data.empty:
+        if call_categories is not None:
+            column_name = "CALL_CATEGORY"
+        else:
+            column_name = "CALL_TYPE"
+
+        this_months_category_counts = (
+            this_months_data[column_name].value_counts().reset_index()
+        )
+        last_months_category_counts = (
+            last_months_data[column_name].value_counts().reset_index()
+        )
+        combined_data = pd.merge(
+            this_months_category_counts,
+            last_months_category_counts,
+            on="CALL_CATEGORY",
+            how="outer",
+        ).fillna(0)
+
+        table = get_table(
+            combined_data,
+            columns=[
+                "Category",
+                "This Month",
+                "Last Month",
+            ],
+            sort_by="This Month",
+        )
+
+        print(table)
+    else:
+        print("\nNo data matches the specified criteria.")
 
 
 if __name__ == "__main__":
@@ -228,60 +253,19 @@ if __name__ == "__main__":
     if settings and not os.path.exists(csv_file):
         download_file(settings["data_url"], csv_file)
 
-    start_date = (datetime.now() - relativedelta(months=1)).strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
-    end_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    df = get_dataframe_from_csv(csv_file)
+    df = add_datetime_column(df)
+    df = filter_by_datetime(df, TWO_MONTHS_AGO, NOW)
 
-    this_months_data = filter_data_by_address_and_offense_datetime(
-        csv_file,
-        call_categories,
+    df = filter_by_address(
+        df,
         streets.get("address_ranges"),
         streets.get("cross_streets"),
-        start_date,
-        end_date,
     )
 
-    start_date = (datetime.now() - relativedelta(months=2)).strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
-    end_date = (datetime.now() - relativedelta(months=1)).strftime("%Y-%m-%d %H:%M:%S")
-
-    last_months_data = filter_data_by_address_and_offense_datetime(
-        csv_file,
-        call_categories,
-        streets.get("address_ranges"),
-        streets.get("cross_streets"),
-        start_date,
-        end_date,
-    )
-
-    if not this_months_data.empty and not last_months_data.empty:
-        if call_categories is not None:
-            column_name = "CALL_CATEGORY"
-        else:
-            column_name = "CALL_TYPE"
-
-        this_months_category_counts = (
-            this_months_data["CALL_CATEGORY"].value_counts().reset_index()
+    if call_categories is not None:
+        df["CALL_CATEGORY"] = (
+            df["CALL_TYPE"].map(call_categories).fillna("Uncategorized")
         )
-        last_months_category_counts = (
-            last_months_data["CALL_CATEGORY"].value_counts().reset_index()
-        )
-        combined_data = pd.merge(
-            this_months_category_counts,
-            last_months_category_counts,
-            on="CALL_CATEGORY",
-            how="outer",
-        ).fillna(0)
-        print_data(
-            combined_data,
-            columns=[
-                "Category",
-                "This Month",
-                "Last Month",
-            ],
-            sort_by="This Month",
-        )
-    else:
-        print("\nNo data matches the specified criteria.")
+
+    print_data(df)
