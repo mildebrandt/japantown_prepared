@@ -182,7 +182,7 @@ def get_table(
     return markdown_table
 
 
-def print_data(df):
+def print_data(df, call_categories=None):
     # --- Date and time filtering
     this_months_data = df[
         (df["OFFENSE_DATETIME"] >= ONE_MONTH_AGO) & (df["OFFENSE_DATETIME"] <= NOW)
@@ -208,7 +208,7 @@ def print_data(df):
         combined_data = pd.merge(
             this_months_category_counts,
             last_months_category_counts,
-            on="CALL_CATEGORY",
+            on=column_name,
             how="outer",
         ).fillna(0)
 
@@ -268,4 +268,4 @@ if __name__ == "__main__":
             df["CALL_TYPE"].map(call_categories).fillna("Uncategorized")
         )
 
-    print_data(df)
+    print_data(df, call_categories=call_categories)
