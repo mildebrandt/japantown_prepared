@@ -1,4 +1,19 @@
-Install the requirements and run:
+If on a NixOS system, enter a nix shell:
+
+```
+nix-shell
+```
+
+Otherwise, create a virtual environment, enter it, and install the dependencies:
+
+```
+python -m venv venv
+. ./venv/bin/activate
+pip install -r requirements.txt
+```
+
+Run the script:
+
 ```
 python generate_report.py
 ```
