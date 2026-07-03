@@ -1,6 +1,7 @@
 import os
 import re
 from datetime import datetime
+from tabulate import tabulate
 
 import pandas as pd
 import requests
@@ -195,8 +196,7 @@ def get_table(
             ignore_index=True,
         )
 
-    markdown_table = _df.to_markdown(index=False, tablefmt=tablefmt)
-    return markdown_table
+    return tabulate(_df, headers="keys", tablefmt="psql", maxcolwidths=[None, 10, 10, 10], showindex=False)
 
 
 def print_data(df, call_categories=None):
@@ -253,11 +253,11 @@ def print_data(df, call_categories=None):
             combined_data,
             columns=[
                 "Category",
-                "This Month",
-                "Last Month",
-                "Last Year",
+                "This\nMonth",
+                "Last\nMonth",
+                "Last\nYear",
             ],
-            sort_by="This Month",
+            sort_by="This\nMonth",
         )
 
         print(table)
